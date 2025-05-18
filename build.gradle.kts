@@ -12,7 +12,8 @@ repositories {
 
 dependencies {
     implementation(libs.kotlin.stdlib)
-    implementation(libs.google.cloud.speech)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
     implementation(libs.jlayer)
 }
 
