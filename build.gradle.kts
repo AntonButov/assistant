@@ -1,5 +1,6 @@
 plugins {
-    kotlin("jvm") version "2.1.20"
+    alias(libs.plugins.kotlin.jvm)
+    application
 }
 
 group = "tech.antonbutov"
@@ -10,9 +11,11 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.google.cloud.speech)
+    implementation(libs.jlayer)
 }
 
-tasks.test {
-    useJUnitPlatform()
+application {
+    mainClass.set("tech.antonbutov.MainKt")
 }

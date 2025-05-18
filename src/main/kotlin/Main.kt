@@ -1,14 +1,19 @@
 package tech.antonbutov
 
-import javax.sound.sampled.AudioFileFormat
+import com.google.cloud.speech.v1.RecognitionAudio
+import com.google.cloud.speech.v1.RecognitionConfig
+import com.google.cloud.speech.v1.RecognizeRequest
+import com.google.cloud.speech.v1.SpeechClient
+import com.google.cloud.speech.v1.RecognitionConfig.AudioEncoding
+import com.google.protobuf.ByteString
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
-import javax.sound.sampled.AudioInputStream
-import java.io.File
+import java.io.ByteArrayOutputStream
 
 fun main() {
+    // Настройка аудио
     val sampleRate = 16000f
     val sampleSizeInBits = 16
     val channels = 1
@@ -27,19 +32,60 @@ fun main() {
     line.open(format)
     line.start()
 
-    val wavFile = File("output.wav")
-    println("Recording...")
+    println("Recording... (speak now)")
 
-    // Создаем AudioInputStream из TargetDataLine
-    val audioStream = AudioInputStream(line)
+    // Запись аудио в память
+    val out = ByteArrayOutputStream()
+    val buffer = ByteArray(1024)
+    val recordTime = 5 * sampleRate.toInt() // запись 5 секунд
+    var bytesRead = 0
 
-    // Запись в течение 5 секунд
-    val recordTime = 5 * sampleRate.toInt() // 5 секунд
-
-    // Записываем аудио в файл
-    AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, wavFile)
+    while (bytesRead < recordTime) {
+        val numBytesRead = line.read(buffer, 0, buffer.size)
+        out.write(buffer, 0, numBytesRead)
+        bytesRead += numBytesRead
+    }
 
     println("Finished recording.")
     line.stop()
     line.close()
+
+    val audioBytes = out.toByteArray()
+    out.close()
+
+    // Отправляем аудио в Google Speech-to-Text API
+    try {
+        SpeechClient.create().use { speechClient ->
+            // Подготовка аудио для Google API
+            val audio = RecognitionAudio.newBuilder()
+                .setContent(ByteString.copyFrom(audioBytes))
+                .build()
+
+            // Настройка распознавания
+            val config = RecognitionConfig.newBuilder()
+                .setEncoding(AudioEncoding.LINEAR16)
+                .setSampleRateHertz(sampleRate.toInt())
+                .setLanguageCode("ru-RU") // Измените на нужный язык
+                .build()
+
+            val request = RecognizeRequest.newBuilder()
+                .setConfig(config)
+                .setAudio(audio)
+                .build()
+
+            // Отправка запроса и получение ответа
+            val response = speechClient.recognize(request)
+
+            println("Transcription results:")
+            for (result in response.resultsList) {
+                for (alternative in result.alternativesList) {
+                    println("Transcription: ${alternative.transcript}")
+                    println("Confidence: ${alternative.confidence}")
+                }
+            }
+        }
+    } catch (e: Exception) {
+        println("Error occurred while sending audio to Google Speech-to-Text API: ${e.message}")
+        e.printStackTrace()
+    }
 }
