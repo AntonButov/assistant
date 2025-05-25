@@ -17,14 +17,17 @@ val protobufVersion = "3.24.0"
 
 dependencies {
     // gRPC
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
 
-    implementation("io.grpc:grpc-netty:1.42.1")
+    implementation("io.grpc:grpc-netty-shaded:$grpcVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("io.grpc:grpc-stub:$grpcVersion")
+    implementation("io.grpc:grpc-core:$grpcVersion")
+    implementation("io.grpc:grpc-api:$grpcVersion")
     implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
 
     // Protobuf
+    implementation("com.google.protobuf:protobuf-java:$protobufVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
 
     // Auth

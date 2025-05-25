@@ -5,9 +5,9 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
 import com.google.protobuf.ByteString
-import io.grpc.netty.GrpcSslContexts
-import io.grpc.netty.NettyChannelBuilder
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
+import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
