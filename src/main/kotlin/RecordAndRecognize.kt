@@ -15,7 +15,7 @@ import kotlin.concurrent.thread
 
 class SpeechRecorderRecognizer(
     private val authorizationKey: String,
-    private val scope: String = "SALUTE_SPEECH_PERS"
+    private val scope: String = "SALUTE_SPEECH_PERS",
 ) : Closeable {
     private val logger = Logger.getLogger(SpeechRecorderRecognizer::class.java.name)
     private val channel: ManagedChannel
@@ -25,10 +25,11 @@ class SpeechRecorderRecognizer(
 
     init {
         // Создаем канал для подключения к серверу SmartSpeech
-        channel = ManagedChannelBuilder
-            .forAddress("smartspeech.sber.ru", 443)
-            .useTransportSecurity()
-            .build()
+        channel =
+            ManagedChannelBuilder
+                .forAddress("smartspeech.sber.ru", 443)
+                .useTransportSecurity()
+                .build()
 
         // Создаем заголовки для авторизации
         val headers = Metadata()
@@ -38,9 +39,10 @@ class SpeechRecorderRecognizer(
         headers.put(scopeKey, scope)
 
         // Создаем стаб с установленными заголовками
-        stub = SmartSpeechGrpc.newStub(channel)
-            .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
-            .withDeadlineAfter(120, TimeUnit.SECONDS)
+        stub =
+            SmartSpeechGrpc.newStub(channel)
+                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
+                .withDeadlineAfter(120, TimeUnit.SECONDS)
     }
 
     /**
@@ -48,7 +50,7 @@ class SpeechRecorderRecognizer(
      */
     fun recordAndRecognize(
         recordDurationSeconds: Int = 0, // 0 = запись до нажатия Enter
-        languageCode: String = "ru-RU"
+        languageCode: String = "ru-RU",
     ) {
         // Создаем объект для захвата аудио
         val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
@@ -63,70 +65,82 @@ class SpeechRecorderRecognizer(
 
         logger.info("Начало записи с микрофона")
         println("=== Запись началась. Говорите в микрофон. ===")
-        println("Нажмите Enter для завершения записи${if (recordDurationSeconds > 0) " или дождитесь $recordDurationSeconds секунд" else ""}.")
+        println(
+            "Нажмите Enter для завершения записи${if (recordDurationSeconds > 0) " или дождитесь $recordDurationSeconds секунд" else ""}.",
+        )
 
         // Настраиваем опции распознавания
-        val options = Salutespeech.RecognitionOptions.newBuilder()
-            .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
-            .setSampleRate(16000)
-            .setChannelsCount(1)
-            .setLanguage(languageCode)
-            .setEnablePartialResults(Salutespeech.OptionalBool.newBuilder().setEnable(true).build()) // Получаем промежуточные результаты
-            .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build()) // Распознаем несколько высказываний
-            .build()
+        val options =
+            Salutespeech.RecognitionOptions.newBuilder()
+                .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
+                .setSampleRate(16000)
+                .setChannelsCount(1)
+                .setLanguage(languageCode)
+                .setEnablePartialResults(
+                    Salutespeech.OptionalBool.newBuilder().setEnable(true).build(),
+                ) // Получаем промежуточные результаты
+                .setEnableMultiUtterance(
+                    Salutespeech.OptionalBool.newBuilder().setEnable(true).build(),
+                ) // Распознаем несколько высказываний
+                .build()
 
         // Создаем запрос с опциями
-        val optionsRequest = Salutespeech.RecognitionRequest.newBuilder()
-            .setOptions(options)
-            .build()
+        val optionsRequest =
+            Salutespeech.RecognitionRequest.newBuilder()
+                .setOptions(options)
+                .build()
 
         // Создаем синхронизатор для ожидания завершения потока
         val finishLatch = CountDownLatch(1)
         val resultBuilder = StringBuilder()
 
         // Создаем обработчик ответов
-        val streamObserver = object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
-            override fun onNext(response: Salutespeech.RecognitionResponse) {
-                when {
-                    response.hasTranscription() -> {
-                        val transcription = response.transcription
-                        val isEou = transcription.eou
+        val streamObserver =
+            object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
+                override fun onNext(response: Salutespeech.RecognitionResponse) {
+                    when {
+                        response.hasTranscription() -> {
+                            val transcription = response.transcription
+                            val isEou = transcription.eou
 
-                        for (result in transcription.resultsList) {
-                            val text = if (result.normalizedText.isNotEmpty()) {
-                                result.normalizedText
-                            } else {
-                                result.text
-                            }
+                            for (result in transcription.resultsList) {
+                                val text =
+                                    if (result.normalizedText.isNotEmpty()) {
+                                        result.normalizedText
+                                    } else {
+                                        result.text
+                                    }
 
-                            // Если это промежуточный результат, печатаем с возвратом каретки
-                            if (!isEou) {
-                                print("\r${" ".repeat(100)}\r>> $text")
-                            } else {
-                                // Если финальный результат, добавляем в итоговый текст
-                                resultBuilder.append(text).append(" ")
-                                println("\r${" ".repeat(100)}\r✓ $text")
+                                // Если это промежуточный результат, печатаем с возвратом каретки
+                                if (!isEou) {
+                                    print("\r${" ".repeat(100)}\r>> $text")
+                                } else {
+                                    // Если финальный результат, добавляем в итоговый текст
+                                    resultBuilder.append(text).append(" ")
+                                    println("\r${" ".repeat(100)}\r✓ $text")
+                                }
                             }
                         }
-                    }
-                    response.hasBackendInfo() -> {
-                        val backendInfo = response.backendInfo
-                        logger.info("Получена информация о бэкенде: модель=${backendInfo.modelName}, версия=${backendInfo.modelVersion}")
+                        response.hasBackendInfo() -> {
+                            val backendInfo = response.backendInfo
+                            logger.info(
+                                "Получена информация о бэкенде: модель=${backendInfo.modelName}, версия=${backendInfo.modelVersion}",
+                            )
+                        }
                     }
                 }
-            }
 
-            override fun onError(t: Throwable) {
-                logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                finishLatch.countDown()
-            }
+                override fun onError(t: Throwable) {
+                    logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
+                    finishLatch.countDown()
+                }
 
-            override fun onCompleted() {
-                println("\n=== Распознавание завершено ===")
-                println(resultBuilder.toString().trim())
-                finishLatch.countDown()
+                override fun onCompleted() {
+                    println("\n=== Распознавание завершено ===")
+                    println(resultBuilder.toString().trim())
+                    finishLatch.countDown()
+                }
             }
-        }
 
         // Получаем requestObserver для отправки запросов
         val requestObserver = stub.recognize(streamObserver)
@@ -136,30 +150,34 @@ class SpeechRecorderRecognizer(
             requestObserver.onNext(optionsRequest)
 
             // Запускаем отдельный поток для прослушивания ввода с клавиатуры
-            val inputThread = thread {
-                System.`in`.read()
-                isRecording = false
-                println("\nЗавершение записи...")
-            }
+            val inputThread =
+                thread {
+                    System.`in`.read()
+                    isRecording = false
+                    println("\nЗавершение записи...")
+                }
 
             // Буфер для чтения аудиоданных
             val buffer = ByteArray(3200) // 100 мс аудио при 16кГц 16-бит
             isRecording = true
 
             // Запускаем таймер для автоматического завершения, если указана длительность
-            val endTime = if (recordDurationSeconds > 0)
-                System.currentTimeMillis() + recordDurationSeconds * 1000L
-            else
-                Long.MAX_VALUE
+            val endTime =
+                if (recordDurationSeconds > 0) {
+                    System.currentTimeMillis() + recordDurationSeconds * 1000L
+                } else {
+                    Long.MAX_VALUE
+                }
 
             // Читаем и отправляем аудиоданные
             while (isRecording && System.currentTimeMillis() < endTime) {
                 val bytesRead = microphone.read(buffer, 0, buffer.size)
                 if (bytesRead > 0) {
                     // Создаем запрос с аудиоданными
-                    val audioChunkRequest = Salutespeech.RecognitionRequest.newBuilder()
-                        .setAudioChunk(ByteString.copyFrom(buffer, 0, bytesRead))
-                        .build()
+                    val audioChunkRequest =
+                        Salutespeech.RecognitionRequest.newBuilder()
+                            .setAudioChunk(ByteString.copyFrom(buffer, 0, bytesRead))
+                            .build()
 
                     // Отправляем аудиоданные
                     requestObserver.onNext(audioChunkRequest)
@@ -180,7 +198,6 @@ class SpeechRecorderRecognizer(
 
             // Ждем завершения распознавания
             finishLatch.await(60, TimeUnit.SECONDS)
-
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Ошибка при обработке аудио", e)
             requestObserver.onError(e)

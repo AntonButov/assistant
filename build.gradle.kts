@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version libs.versions.kotlin
     id("com.google.protobuf") version "0.9.3"
+    alias(libs.plugins.ktlint)
     application
 }
 
@@ -9,6 +10,8 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
+    google()
 }
 
 val grpcVersion = "1.58.0"
@@ -31,7 +34,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
 
     // Auth
-    //implementation("com.google.auth:google-auth-library-oauth2-http:1.17.0")
+    // implementation("com.google.auth:google-auth-library-oauth2-http:1.17.0")
 
     // SLF4J + Logback
     implementation("ch.qos.logback:logback-classic:1.4.11")
@@ -66,6 +69,44 @@ protobuf {
             }
         }
     }
+}
+
+private val ktLintConfig: org.jlleitschuh.gradle.ktlint.KtlintExtension.() -> Unit = {
+    debug.set(false)
+    android.set(false)
+    ignoreFailures.set(true)
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+    }
+}
+
+ktlint {
+    debug.set(false)
+    android.set(false)
+    ignoreFailures.set(true)
+    outputToConsole.set(true)
+
+    filter {
+        exclude("**/generated/**")
+        include("**/kotlin/**")
+    }
+
+    reporters {
+        reporter(org.jlleitschuh.gradle.ktlint.reporter.ReporterType.PLAIN)
+    }
+}
+
+// Привязка ktlintFormat к задачам test, build и run
+tasks.matching { it.name == "test" || it.name == "build" || it.name == "run" }.configureEach {
+    dependsOn("ktlintFormat")
+}
+
+application {
+    mainClass.set("RecognizeFileKt")
+}
+
+ktlint {
+    ktLintConfig()
 }
 
 application {

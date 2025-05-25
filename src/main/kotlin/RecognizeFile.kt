@@ -1,31 +1,21 @@
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
-import io.grpc.Metadata
-import io.grpc.stub.MetadataUtils
 import com.google.protobuf.ByteString
+import io.grpc.ManagedChannel
+import io.grpc.Metadata
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import io.grpc.stub.MetadataUtils
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.File
-import java.net.InetSocketAddress
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.X509TrustManager
 
 /**
  * Sealed класс для различных типов результатов распознавания речи
@@ -36,7 +26,7 @@ sealed class RecognitionResult {
      */
     data class Transcription(
         val text: String,
-        val isFinal: Boolean
+        val isFinal: Boolean,
     ) : RecognitionResult()
 
     /**
@@ -44,7 +34,7 @@ sealed class RecognitionResult {
      */
     data class BackendInfo(
         val modelName: String,
-        val modelVersion: String
+        val modelVersion: String,
     ) : RecognitionResult()
 
     /**
@@ -67,7 +57,6 @@ class SpeechKitClient(
     accessKey: String,
     scope: String = "SALUTE_SPEECH_PERS",
 ) : Closeable {
-
     private val logger = Logger.getLogger(SpeechKitClient::class.java.name)
     private val channel: ManagedChannel
     private val stub: SmartSpeechGrpc.SmartSpeechStub
@@ -77,15 +66,17 @@ class SpeechKitClient(
 
     init {
         // Создаем SSL контекст, который не проверяет сертификаты сервера
-        val sslContext = GrpcSslContexts.forClient()
-            .trustManager(InsecureTrustManagerFactory.INSTANCE) // Небезопасно для production
-            .build()
+        val sslContext =
+            GrpcSslContexts.forClient()
+                .trustManager(InsecureTrustManagerFactory.INSTANCE) // Небезопасно для production
+                .build()
 
         // Создаем канал с отключенной проверкой сертификатов
-        channel = NettyChannelBuilder
-            .forAddress(serverAddress, serverPort)
-            .sslContext(sslContext)
-            .build()
+        channel =
+            NettyChannelBuilder
+                .forAddress(serverAddress, serverPort)
+                .sslContext(sslContext)
+                .build()
 
         // Создаем заголовки для авторизации
         val headers = Metadata()
@@ -95,9 +86,10 @@ class SpeechKitClient(
         headers.put(scopeKey, scope)
 
         // Создаем стаб с установленными заголовками
-        stub = SmartSpeechGrpc.newStub(channel)
-            .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
-            .withDeadlineAfter(30, TimeUnit.SECONDS)
+        stub =
+            SmartSpeechGrpc.newStub(channel)
+                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
+                .withDeadlineAfter(30, TimeUnit.SECONDS)
 
         logger.info("SpeechKit клиент создан с отключенной проверкой SSL-сертификатов")
     }
@@ -108,93 +100,103 @@ class SpeechKitClient(
     fun recognizeAsFlow(
         audioFile: File,
         languageCode: String = "ru-RU",
-        sampleRate: Int = 16000
-    ): Flow<RecognitionResult> = callbackFlow {
-        logger.info("Чтение аудиофайла: ${audioFile.absolutePath}")
+        sampleRate: Int = 16000,
+    ): Flow<RecognitionResult> =
+        callbackFlow {
+            logger.info("Чтение аудиофайла: ${audioFile.absolutePath}")
 
-        if (!audioFile.exists()) {
-            close(IllegalArgumentException("Файл не существует: ${audioFile.absolutePath}"))
-            return@callbackFlow
-        }
+            if (!audioFile.exists()) {
+                close(IllegalArgumentException("Файл не существует: ${audioFile.absolutePath}"))
+                return@callbackFlow
+            }
 
-        val audioBytes = audioFile.readBytes()
-        logger.info("Прочитано ${audioBytes.size} байт")
+            val audioBytes = audioFile.readBytes()
+            logger.info("Прочитано ${audioBytes.size} байт")
 
-        // Настраиваем опции распознавания
-        val options = Salutespeech.RecognitionOptions.newBuilder()
-            .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.MP3)
-            .setSampleRate(sampleRate)
-            .setChannelsCount(1)
-            .setLanguage(languageCode)
-            // Включаем поддержку множественных высказываний
-            .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
-            // Настраиваем распознавание длинных высказываний
-            .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
-            .build()
+            // Настраиваем опции распознавания
+            val options =
+                Salutespeech.RecognitionOptions.newBuilder()
+                    .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.MP3)
+                    .setSampleRate(sampleRate)
+                    .setChannelsCount(1)
+                    .setLanguage(languageCode)
+                    // Включаем поддержку множественных высказываний
+                    .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                    // Настраиваем распознавание длинных высказываний
+                    .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                    .build()
 
-        // Создаем запрос с опциями
-        val optionsRequest = Salutespeech.RecognitionRequest.newBuilder()
-            .setOptions(options)
-            .build()
+            // Создаем запрос с опциями
+            val optionsRequest =
+                Salutespeech.RecognitionRequest.newBuilder()
+                    .setOptions(options)
+                    .build()
 
-        // Создаем запрос с аудиоданными
-        val audioChunkRequest = Salutespeech.RecognitionRequest.newBuilder()
-            .setAudioChunk(ByteString.copyFrom(audioBytes))
-            .build()
+            // Создаем запрос с аудиоданными
+            val audioChunkRequest =
+                Salutespeech.RecognitionRequest.newBuilder()
+                    .setAudioChunk(ByteString.copyFrom(audioBytes))
+                    .build()
 
-        logger.info("Отправка запроса на распознавание...")
+            logger.info("Отправка запроса на распознавание...")
 
-        // Создаем обработчик ответов
-        val streamObserver = object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
-            override fun onNext(response: Salutespeech.RecognitionResponse) {
-                when {
-                    response.hasTranscription() -> {
-                        val transcription = response.transcription
-                        val isEou = transcription.eou
+            // Создаем обработчик ответов
+            val streamObserver =
+                object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
+                    override fun onNext(response: Salutespeech.RecognitionResponse) {
+                        when {
+                            response.hasTranscription() -> {
+                                val transcription = response.transcription
+                                val isEou = transcription.eou
 
-                        val resultText = transcription.resultsList.joinToString(" ") { result ->
-                            if (result.normalizedText.isNotEmpty()) result.normalizedText else result.text
+                                val resultText =
+                                    transcription.resultsList.joinToString(" ") { result ->
+                                        if (result.normalizedText.isNotEmpty()) result.normalizedText else result.text
+                                    }
+
+                                if (resultText.isNotEmpty()) {
+                                    trySend(RecognitionResult.Transcription(resultText, isEou))
+                                    logger.info("Распознано: $resultText (финальный: $isEou)")
+                                }
+                            }
+                            response.hasBackendInfo() -> {
+                                val backendInfo = response.backendInfo
+                                trySend(
+                                    RecognitionResult.BackendInfo(
+                                        modelName = backendInfo.modelName,
+                                        modelVersion = backendInfo.modelVersion,
+                                    ),
+                                )
+                                logger.info(
+                                    "Получена информация о бэкенде: модель=${backendInfo.modelName}, версия=${backendInfo.modelVersion}",
+                                )
+                            }
+                            response.hasInsight() -> {
+                                trySend(RecognitionResult.Insight(response.insight.insightResult))
+                                logger.info("Получен insight: ${response.insight.insightResult}")
+                            }
+                            response.hasVad() -> {
+                                val vadInfo = response.vad
+                                trySend(RecognitionResult.VadInfo(true)) // vadInfo.hasVoice
+                                logger.info("Получен VAD результат: ") // ${vadInfo.hasVoice}")
+                            }
                         }
+                    }
 
-                        if (resultText.isNotEmpty()) {
-                            trySend(RecognitionResult.Transcription(resultText, isEou))
-                            logger.info("Распознано: $resultText (финальный: $isEou)")
-                        }
+                    override fun onError(t: Throwable) {
+                        logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
+                        trySend(RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t))
+                        close(t)
                     }
-                    response.hasBackendInfo() -> {
-                        val backendInfo = response.backendInfo
-                        trySend(RecognitionResult.BackendInfo(
-                            modelName = backendInfo.modelName,
-                            modelVersion = backendInfo.modelVersion
-                        ))
-                        logger.info("Получена информация о бэкенде: модель=${backendInfo.modelName}, версия=${backendInfo.modelVersion}")
-                    }
-                    response.hasInsight() -> {
-                        trySend(RecognitionResult.Insight(response.insight.insightResult))
-                        logger.info("Получен insight: ${response.insight.insightResult}")
-                    }
-                    response.hasVad() -> {
-                        val vadInfo = response.vad
-                        trySend(RecognitionResult.VadInfo(true)) // vadInfo.hasVoice
-                        logger.info("Получен VAD результат: ")//${vadInfo.hasVoice}")
+
+                    override fun onCompleted() {
+                        logger.info("Распознавание завершено успешно")
+                        close()
                     }
                 }
-            }
 
-            override fun onError(t: Throwable) {
-                logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                trySend(RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t))
-                close(t)
-            }
-
-            override fun onCompleted() {
-                logger.info("Распознавание завершено успешно")
-                close()
-            }
-        }
-
-        // Получаем requestObserver для отправки запросов
-        val requestObserver = stub.recognize(streamObserver)
+            // Получаем requestObserver для отправки запросов
+            val requestObserver = stub.recognize(streamObserver)
 
             //   try {
             // Отправляем сначала настройки
@@ -206,23 +208,23 @@ class SpeechKitClient(
 
             logger.info("Сигнализация о завершении запроса...")
             requestObserver.onCompleted()
-    //    } catch (e: Exception) {
-        //    logger.info("Ошибка при отправке запроса")
-        //    trySend(RecognitionResult.Error("Ошибка при отправке запроса: ${e.message}", e))
-       //     requestObserver.onError(e)
-      //      close(e)
+            //    } catch (e: Exception) {
+            //    logger.info("Ошибка при отправке запроса")
+            //    trySend(RecognitionResult.Error("Ошибка при отправке запроса: ${e.message}", e))
+            //     requestObserver.onError(e)
+            //      close(e)
 //        }
 
-        // Закрываем Flow когда канал закрывается
-        awaitClose {
-            logger.info("Flow закрыт")
+            // Закрываем Flow когда канал закрывается
+            awaitClose {
+                logger.info("Flow закрыт")
+            }
+        }.catch { e ->
+            // Перехватываем и отправляем любые ошибки как RecognitionResult.Error
+            emit(RecognitionResult.Error("Необработанная ошибка: ${e.message}", e))
+            logger.log(Level.SEVERE, "Необработанная ошибка в Flow", e)
+            logger.info("Flow закрыт из-за ошибки")
         }
-    }.catch { e ->
-        // Перехватываем и отправляем любые ошибки как RecognitionResult.Error
-        emit(RecognitionResult.Error("Необработанная ошибка: ${e.message}", e))
-        logger.log(Level.SEVERE, "Необработанная ошибка в Flow", e)
-        logger.info("Flow закрыт из-за ошибки")
-    }
 
     override fun close() {
         logger.info("Закрытие клиента распознавания речи")
