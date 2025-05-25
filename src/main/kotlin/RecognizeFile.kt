@@ -202,28 +202,6 @@ class SpeechKitClient(
         logger.info("Flow закрыт из-за ошибки")
     }
 
-    /**
-     * Синхронно отправляет аудиофайл на распознавание и возвращает текст
-     * (для обратной совместимости)
-     */
-    suspend fun recognizeFile(
-        audioFile: File,
-        languageCode: String = "ru-RU",
-        sampleRate: Int = 16000
-    ): String = withContext(Dispatchers.IO) {
-        var finalText = ""
-
-        recognizeAsFlow(audioFile, languageCode, sampleRate).collect { result ->
-            if (result is RecognitionResult.Transcription && result.isFinal) {
-                finalText = result.text
-            } else if (result is RecognitionResult.Error) {
-                throw result.cause ?: RuntimeException(result.message)
-            }
-        }
-
-        return@withContext finalText.ifEmpty { "Не удалось распознать речь" }
-    }
-
     override fun close() {
         logger.info("Закрытие клиента распознавания речи")
         channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
