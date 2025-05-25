@@ -1,16 +1,14 @@
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
-import com.google.protobuf.ByteString
 import io.grpc.ManagedChannel
+import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
-import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
-import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.grpc.stub.MetadataUtils
-import kotlinx.coroutines.channels.awaitClose
+import com.google.protobuf.ByteString
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.channels.awaitClose
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -54,45 +52,31 @@ sealed class RecognitionResult {
 }
 
 class SpeechKitClient(
-    private val authManager: SpeechKitAuth,
-    private val scope: String = "SALUTE_SPEECH_PERS",
+    accessKey: String,
+    scope: String = "SALUTE_SPEECH_PERS",
 ) : Closeable {
+
     private val logger = Logger.getLogger(SpeechKitClient::class.java.name)
-    private val channel: ManagedChannel
+    private val channel: ManagedChannel = ManagedChannelBuilder
+        .forAddress("smartspeech.sber.ru", 443)
+        .useTransportSecurity()
+        // Отключаем проверку SSL-сертификатов
+        .overrideAuthority("smartspeech.sber.ru") // Важно сохранить правильный hostname
+        .build()
     private val stub: SmartSpeechGrpc.SmartSpeechStub
 
-    private val serverAddress = "smartspeech.sber.ru"
-    private val serverPort = 443
-
     init {
-        // Получаем токен доступа через менеджер аутентификации
-        val accessToken = authManager.getAccessToken()
-
-        // Создаем SSL контекст, который не проверяет сертификаты сервера
-        val sslContext =
-            GrpcSslContexts.forClient()
-                .trustManager(InsecureTrustManagerFactory.INSTANCE) // Небезопасно для production
-                .build()
-
-        // Создаем канал с отключенной проверкой сертификатов
-        channel =
-            NettyChannelBuilder
-                .forAddress(serverAddress, serverPort)
-                .sslContext(sslContext)
-                .build()
-
         // Создаем заголовки для авторизации
         val headers = Metadata()
         val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
         val scopeKey = Metadata.Key.of("Content-Scope", Metadata.ASCII_STRING_MARSHALLER)
-        headers.put(authKey, "Bearer $accessToken")
+        headers.put(authKey, "Bearer $accessKey")
         headers.put(scopeKey, scope)
 
         // Создаем стаб с установленными заголовками
-        stub =
-            SmartSpeechGrpc.newStub(channel)
-                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
-                .withDeadlineAfter(30, TimeUnit.SECONDS)
+        stub = SmartSpeechGrpc.newStub(channel)
+            .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
+            .withDeadlineAfter(30, TimeUnit.SECONDS)
 
         logger.info("SpeechKit клиент создан с отключенной проверкой SSL-сертификатов")
     }
