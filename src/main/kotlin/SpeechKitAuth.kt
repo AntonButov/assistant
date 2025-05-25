@@ -1,15 +1,18 @@
-import okhttp3.FormBody
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import java.util.Date
-import java.util.UUID
-import java.util.concurrent.TimeUnit
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import tech.antonbutov.api.models.OAuthResponse
+import java.util.*
+import java.util.logging.Level
 import java.util.logging.Logger
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 class SpeechKitAuth(
     private val authorizationKey: String, // Base64 encoded credentials
@@ -18,31 +21,43 @@ class SpeechKitAuth(
     private val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
     private var accessToken: String? = null
     private var tokenExpirationTime: Long = 0
-    private val httpClient: OkHttpClient
+    private val httpClient: HttpClient
 
     init {
-        // Создаем TrustManager, который принимает любые сертификаты
-        val trustAllCerts = arrayOf<TrustManager>(
-            object : X509TrustManager {
-                override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-                override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        // Создаем HTTP клиент с отключенной проверкой SSL
+        httpClient = HttpClient(CIO) {
+            // Отключаем проверку SSL для dev/test окружений
+            engine {
+                https {
+                    trustManager = object : javax.net.ssl.X509TrustManager {
+                        override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+                        override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+                        override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+                    }
+                }
             }
-        )
 
-        // Создаем SSLContext с нашим TrustManager
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, trustAllCerts, SecureRandom())
+            // Добавляем поддержку JSON
+            install(ContentNegotiation) {
+                json(Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = true
+                    isLenient = true
+                })
+            }
 
-        // Создаем OkHttpClient с отключенной проверкой сертификатов
-        httpClient = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-            .hostnameVerifier { _, _ -> true } // Отключаем проверку имени хоста
-            .build()
+            // Добавляем логирование
+            install(Logging) {
+                logger = object : io.ktor.client.plugins.logging.Logger {
+                    override fun log(message: String) {
+                        Logger.getLogger("Ktor").info(message)
+                    }
+                }
+                level = LogLevel.INFO
+            }
+        }
 
-        logger.info("SpeechKitAuth создан с отключенной проверкой SSL-сертификатов")
+        logger.info("SpeechKitAuth создан с использованием Ktor")
     }
 
     /**
@@ -51,12 +66,9 @@ class SpeechKitAuth(
     @Synchronized
     fun getAccessToken(): String {
         val currentTime = System.currentTimeMillis()
-
-        // Если токен отсутствует или срок его действия истек, получаем новый
         if (accessToken == null || currentTime >= tokenExpirationTime) {
             refreshAccessToken()
         }
-
         return accessToken ?: throw IllegalStateException("Не удалось получить токен доступа")
     }
 
@@ -68,48 +80,33 @@ class SpeechKitAuth(
         logger.info("Запрос нового токена доступа...")
 
         try {
-            // Формируем тело запроса согласно curl-примеру
-            val formBody = FormBody.Builder()
-                .add("scope", scope)
-                .build()
-
-            // Генерируем уникальный RqUID
             val rquid = UUID.randomUUID().toString()
 
-            // Создаем запрос согласно curl-примеру
-            val request = Request.Builder()
-                .url("https://ngw.devices.sberbank.ru:9443/api/v2/oauth")
-                .post(formBody)
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .header("Accept", "application/json")
-                .header("RqUID", rquid)
-                .header("Authorization", "Basic $authorizationKey")
-                .build()
-
-            httpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    throw Exception("Ошибка получения токена: ${response.code} ${response.message}")
-                }
-
-                val responseBody = response.body?.string() ?: throw Exception("Пустой ответ")
-
-                // Парсинг JSON без использования внешних библиотек
-                val accessTokenRegex = "\"access_token\"\\s*:\\s*\"([^\"]+)\"".toRegex()
-                val expiresInRegex = "\"expires_in\"\\s*:\\s*(\\d+)".toRegex()
-
-                accessToken = accessTokenRegex.find(responseBody)?.groupValues?.get(1)
-                    ?: throw Exception("access_token не найден в ответе")
-
-                val expiresIn = expiresInRegex.find(responseBody)?.groupValues?.get(1)?.toIntOrNull()
-                    ?: throw Exception("expires_in не найден в ответе")
-
-                // Устанавливаем время истечения срока действия токена с запасом в 5 минут
-                tokenExpirationTime = System.currentTimeMillis() + (expiresIn - 300) * 1000L
-
-                logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
+            // Используем runBlocking для синхронного вызова suspend-функции в Ktor
+            val response = runBlocking {
+                httpClient.submitForm(
+                    url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+                    formParameters = Parameters.build {
+                        append("scope", scope)
+                    }
+                ) {
+                    headers {
+                        append(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                        append(HttpHeaders.Accept, ContentType.Application.Json.toString())
+                        append("RqUID", rquid)
+                        append(HttpHeaders.Authorization, "Basic $authorizationKey")
+                    }
+                }.body<OAuthResponse>()
             }
+
+            accessToken = response.access_token
+
+            // Устанавливаем время истечения срока действия токена с запасом в 5 минут
+            tokenExpirationTime = System.currentTimeMillis() + (response.expires_in - 300) * 1000L
+
+            logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
         } catch (e: Exception) {
-            logger.severe("Ошибка при обновлении токена: ${e.message}")
+            logger.log(Level.SEVERE, "Ошибка при обновлении токена", e)
             accessToken = null
             tokenExpirationTime = 0
             throw e

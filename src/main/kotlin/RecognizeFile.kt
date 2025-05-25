@@ -81,17 +81,6 @@ class SpeechKitClient(
         logger.info("SpeechKit клиент создан с отключенной проверкой SSL-сертификатов")
     }
 
-    // Добавьте метод для обновления токена и повторного выполнения запроса
-    fun refreshTokenAndRetry() {
-        try {
-            authManager.refreshAccessToken()
-            // Пересоздайте канал с новым токеном или обновите заголовки
-            // ...
-        } catch (e: Exception) {
-            logger.severe("Не удалось обновить токен: ${e.message}")
-            throw e
-        }
-    }
 
     /**
      * Отправляет аудиофайл на распознавание и возвращает Flow с результатами

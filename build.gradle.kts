@@ -1,8 +1,9 @@
 plugins {
     kotlin("jvm") version libs.versions.kotlin
-    kotlin("plugin.serialization") version libs.versions.kotlin
     id("com.google.protobuf") version "0.9.3"
     alias(libs.plugins.ktlint)
+    id("de.jensklingenberg.ktorfit") version "1.10.2" // Добавляем плагин Ktorfit
+    kotlin("plugin.serialization") version libs.versions.kotlin // Для kotlinx.serialization
     application
 }
 
@@ -18,6 +19,8 @@ repositories {
 val grpcVersion = "1.58.0"
 val grpcKotlinVersion = "1.3.0"
 val protobufVersion = "3.24.0"
+val ktorfitVersion = "1.10.2"
+val ktorVersion = "2.3.7"
 
 dependencies {
     // gRPC
@@ -34,20 +37,25 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:$protobufVersion")
     implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
 
-    // Auth
-    // implementation("com.google.auth:google-auth-library-oauth2-http:1.17.0")
+    // Ktor & Ktorfit
+    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:$ktorfitVersion")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-client-logging:$ktorVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // SLF4J + Logback
     implementation("ch.qos.logback:logback-classic:1.4.11")
 
     // Kotlin
     implementation(kotlin("stdlib-jdk8"))
+}
 
-    // OkHttp (для отладки HTTP запросов)
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
-
-    // Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+// Настройка Ktorfit
+ktorfit {
+    version = ktorfitVersion
 }
 
 protobuf {
