@@ -9,12 +9,8 @@ import java.io.File
 import java.util.Base64
 
 fun main() {
-    // Ваши учетные данные Сбера
-    val clientId = "ваш_client_id"
-    val clientSecret = "ваш_client_secret"
-
     // Создаем Basic Auth ключ (Base64 от "clientId:clientSecret")
-    val authorizationKey = Base64.getEncoder().encodeToString("$clientId:$clientSecret".toByteArray())
+    val authorizationKey = "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
 
     val scope = "SALUTE_SPEECH_PERS"
     val audioFilePath = "outm.mp3"

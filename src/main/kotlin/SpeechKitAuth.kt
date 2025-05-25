@@ -102,7 +102,7 @@ class SpeechKitAuth(
             accessToken = response.access_token
 
             // Устанавливаем время истечения срока действия токена с запасом в 5 минут
-            tokenExpirationTime = System.currentTimeMillis() + (response.expires_in - 300) * 1000L
+            tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
 
             logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
         } catch (e: Exception) {
