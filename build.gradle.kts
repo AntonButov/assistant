@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version libs.versions.kotlin
+    kotlin("plugin.serialization") version libs.versions.kotlin
     id("com.google.protobuf") version "0.9.3"
     alias(libs.plugins.ktlint)
     application
@@ -44,6 +45,9 @@ dependencies {
 
     // OkHttp (для отладки HTTP запросов)
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
+
+    // Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
 }
 
 protobuf {

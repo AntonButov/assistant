@@ -54,8 +54,8 @@ sealed class RecognitionResult {
 }
 
 class SpeechKitClient(
-    accessKey: String,
-    scope: String = "SALUTE_SPEECH_PERS",
+    private val authManager: SpeechKitAuth,
+    private val scope: String = "SALUTE_SPEECH_PERS",
 ) : Closeable {
     private val logger = Logger.getLogger(SpeechKitClient::class.java.name)
     private val channel: ManagedChannel
@@ -65,6 +65,9 @@ class SpeechKitClient(
     private val serverPort = 443
 
     init {
+        // Получаем токен доступа через менеджер аутентификации
+        val accessToken = authManager.getAccessToken()
+
         // Создаем SSL контекст, который не проверяет сертификаты сервера
         val sslContext =
             GrpcSslContexts.forClient()
@@ -82,7 +85,7 @@ class SpeechKitClient(
         val headers = Metadata()
         val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
         val scopeKey = Metadata.Key.of("Content-Scope", Metadata.ASCII_STRING_MARSHALLER)
-        headers.put(authKey, "Bearer $accessKey")
+        headers.put(authKey, "Bearer $accessToken")
         headers.put(scopeKey, scope)
 
         // Создаем стаб с установленными заголовками
@@ -92,6 +95,18 @@ class SpeechKitClient(
                 .withDeadlineAfter(30, TimeUnit.SECONDS)
 
         logger.info("SpeechKit клиент создан с отключенной проверкой SSL-сертификатов")
+    }
+
+    // Добавьте метод для обновления токена и повторного выполнения запроса
+    fun refreshTokenAndRetry() {
+        try {
+            authManager.refreshAccessToken()
+            // Пересоздайте канал с новым токеном или обновите заголовки
+            // ...
+        } catch (e: Exception) {
+            logger.severe("Не удалось обновить токен: ${e.message}")
+            throw e
+        }
     }
 
     /**
