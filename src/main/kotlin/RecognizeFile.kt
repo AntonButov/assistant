@@ -7,6 +7,7 @@ import io.grpc.stub.MetadataUtils
 import com.google.protobuf.ByteString
 import io.grpc.netty.GrpcSslContexts
 import io.grpc.netty.NettyChannelBuilder
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
@@ -75,19 +76,12 @@ class SpeechKitClient(
     private val serverPort = 443
 
     init {
-        // Автоматически получаем сертификат с сервера
-        val serverCert = retrieveServerCertificate(serverAddress, serverPort)
-        logger.info("Получен сертификат сервера ${serverAddress}")
-
-        // Создаем TrustManager, который доверяет только этому сертификату
-        val trustManager = createPinningTrustManager(serverCert)
-
-        // Создаем SSL контекст с нашим TrustManager
+        // Создаем SSL контекст, который не проверяет сертификаты сервера
         val sslContext = GrpcSslContexts.forClient()
-            .trustManager(trustManager)
+            .trustManager(InsecureTrustManagerFactory.INSTANCE) // Небезопасно для production
             .build()
 
-        // Создаем канал с настроенным SSL контекстом
+        // Создаем канал с отключенной проверкой сертификатов
         channel = NettyChannelBuilder
             .forAddress(serverAddress, serverPort)
             .sslContext(sslContext)
@@ -104,62 +98,8 @@ class SpeechKitClient(
         stub = SmartSpeechGrpc.newStub(channel)
             .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
             .withDeadlineAfter(30, TimeUnit.SECONDS)
-    }
 
-    // Функция для получения сертификата сервера
-    private fun retrieveServerCertificate(host: String, port: Int): X509Certificate {
-        try {
-            val sslContext = SSLContext.getInstance("TLS")
-            sslContext.init(null, null, null)
-
-            val socketFactory = sslContext.socketFactory
-            val socket = socketFactory.createSocket() as SSLSocket
-
-            // Устанавливаем параметры для корректного handshake
-            socket.soTimeout = 10000
-            socket.enabledProtocols = arrayOf("TLSv1.2", "TLSv1.3")
-            socket.enabledCipherSuites = socket.supportedCipherSuites
-
-            // Подключаемся, но не выполняем полный handshake
-            socket.connect(InetSocketAddress(host, port), 10000)
-
-            // Начинаем handshake для получения сертификата
-            socket.startHandshake()
-
-            // Получаем сертификат сервера
-            val serverCerts = socket.session.peerCertificates
-            socket.close()
-
-            // Возвращаем первый сертификат из цепочки
-            return serverCerts[0] as X509Certificate
-        } catch (e: Exception) {
-            logger.log(Level.SEVERE, "Ошибка при получении сертификата сервера", e)
-            throw RuntimeException("Не удалось получить сертификат сервера: ${e.message}", e)
-        }
-    }
-
-    // Создаем TrustManager, который доверяет только определенному сертификату
-    private fun createPinningTrustManager(pinnedCert: X509Certificate): X509TrustManager {
-        return object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
-                // Не используется для клиента
-            }
-
-            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-                try {
-                    // Проверяем, что один из сертификатов в цепочке совпадает с нашим
-                    if (chain.none { it.encoded.contentEquals(pinnedCert.encoded) }) {
-                        throw CertificateException("Сертификат сервера не соответствует ожидаемому")
-                    }
-                    logger.info("Сертификат сервера успешно проверен (пининг)")
-                } catch (e: Exception) {
-                    logger.log(Level.SEVERE, "Ошибка при проверке сертификата сервера", e)
-                    throw CertificateException("Ошибка проверки сертификата: ${e.message}")
-                }
-            }
-
-            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf(pinnedCert)
-        }
+        logger.info("SpeechKit клиент создан с отключенной проверкой SSL-сертификатов")
     }
 
     /**
