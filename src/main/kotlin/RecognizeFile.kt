@@ -83,7 +83,6 @@ class SpeechKitClient(
             .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
             .withDeadlineAfter(30, TimeUnit.SECONDS)
 
-        logger.info("SpeechKit клиент создан с отключенной проверкой SSL-сертификатов")
     }
 
 
@@ -149,7 +148,7 @@ class SpeechKitClient(
 
                                 if (resultText.isNotEmpty()) {
                                     trySend(RecognitionResult.Transcription(resultText, isEou))
-                                    logger.info("Распознано: $resultText (финальный: $isEou)")
+                                   // logger.info("Распознано: $resultText (финальный: $isEou)")
                                 }
                             }
                             response.hasBackendInfo() -> {
@@ -160,9 +159,6 @@ class SpeechKitClient(
                                         modelVersion = backendInfo.modelVersion,
                                     ),
                                 )
-                                logger.info(
-                                    "Получена информация о бэкенде: модель=${backendInfo.modelName}, версия=${backendInfo.modelVersion}",
-                                )
                             }
                             response.hasInsight() -> {
                                 trySend(RecognitionResult.Insight(response.insight.insightResult))
@@ -171,7 +167,7 @@ class SpeechKitClient(
                             response.hasVad() -> {
                                 val vadInfo = response.vad
                                 trySend(RecognitionResult.VadInfo(true)) // vadInfo.hasVoice
-                                logger.info("Получен VAD результат: ") // ${vadInfo.hasVoice}")
+                               // logger.info("Получен VAD результат: ") // ${vadInfo.hasVoice}")
                             }
                         }
                     }
@@ -183,7 +179,7 @@ class SpeechKitClient(
                     }
 
                     override fun onCompleted() {
-                        logger.info("Распознавание завершено успешно")
+                       // logger.info("Распознавание завершено успешно")
                         close()
                     }
                 }
@@ -191,13 +187,13 @@ class SpeechKitClient(
             // Получаем requestObserver для отправки запросов
             val requestObserver = stub.recognize(streamObserver)
 
-            logger.info("Отправка настроек распознавания...")
+           // logger.info("Отправка настроек распознавания...")
             requestObserver.onNext(optionsRequest)
 
-            logger.info("Отправка аудиоданных (${audioBytes.size} байт)...")
+           // logger.info("Отправка аудиоданных (${audioBytes.size} байт)...")
             requestObserver.onNext(audioChunkRequest)
 
-            logger.info("Сигнализация о завершении запроса...")
+           // logger.info("Сигнализация о завершении запроса...")
             requestObserver.onCompleted()
 
         }

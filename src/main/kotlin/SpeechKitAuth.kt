@@ -21,43 +21,37 @@ class SpeechKitAuth(
     private val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
     private var accessToken: String? = null
     private var tokenExpirationTime: Long = 0
-    private val httpClient: HttpClient
-
-    init {
-        // Создаем HTTP клиент с отключенной проверкой SSL
-        httpClient = HttpClient(CIO) {
-            // Отключаем проверку SSL для dev/test окружений
-            engine {
-                https {
-                    trustManager = object : javax.net.ssl.X509TrustManager {
-                        override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
-                        override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
-                        override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
-                    }
+    // Создаем HTTP клиент с отключенной проверкой SSL
+    private val httpClient: HttpClient = HttpClient(CIO) {
+        // Отключаем проверку SSL для dev/test окружений
+        engine {
+            https {
+                trustManager = object : javax.net.ssl.X509TrustManager {
+                    override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+                    override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+                    override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
                 }
-            }
-
-            // Добавляем поддержку JSON
-            install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    prettyPrint = true
-                    isLenient = true
-                })
-            }
-
-            // Добавляем логирование
-            install(Logging) {
-                logger = object : io.ktor.client.plugins.logging.Logger {
-                    override fun log(message: String) {
-                        Logger.getLogger("Ktor").info(message)
-                    }
-                }
-                level = LogLevel.INFO
             }
         }
 
-        logger.info("SpeechKitAuth создан с использованием Ktor")
+        // Добавляем поддержку JSON
+        install(ContentNegotiation) {
+            json(Json {
+                ignoreUnknownKeys = true
+                prettyPrint = true
+                isLenient = true
+            })
+        }
+
+        // Добавляем логирование
+        install(Logging) {
+            logger = object : io.ktor.client.plugins.logging.Logger {
+                override fun log(message: String) {
+                    Logger.getLogger("Ktor").info(message)
+                }
+            }
+            level = LogLevel.INFO
+        }
     }
 
     /**
@@ -77,12 +71,11 @@ class SpeechKitAuth(
      */
     @Synchronized
     fun refreshAccessToken() {
-        logger.info("Запрос нового токена доступа...")
+       // logger.info("Запрос нового токена доступа...")
 
         try {
             val rquid = UUID.randomUUID().toString()
 
-            // Используем runBlocking для синхронного вызова suspend-функции в Ktor
             val response = runBlocking {
                 httpClient.submitForm(
                     url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
@@ -104,7 +97,7 @@ class SpeechKitAuth(
             // Устанавливаем время истечения срока действия токена с запасом в 5 минут
             tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
 
-            logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
+           // logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Ошибка при обновлении токена", e)
             accessToken = null

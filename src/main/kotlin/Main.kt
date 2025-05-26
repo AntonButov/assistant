@@ -38,13 +38,11 @@ fun main() {
     // Create a logger
     val logger = org.slf4j.LoggerFactory.getLogger("Main")
 
-    try {
         // Создаем менеджер аутентификации с использованием Ktor
         val authManager = SpeechKitAuth(authorizationKey, scope)
 
         // Получаем токен доступа
         val accessToken = authManager.getAccessToken()
-        logger.info("Получен токен доступа: $accessToken")
 
         // Используем токен для распознавания речи
         SpeechKitClient(
@@ -63,10 +61,11 @@ fun main() {
                             logger.info("Текст: ${result.text}")
                             if (result.isFinal) logger.info("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: ${result.text}")
                         }
-                        is RecognitionResult.BackendInfo ->
-                            logger.info("Бэкенд: модель=${result.modelName}, версия=${result.modelVersion}")
-                        is RecognitionResult.Insight ->
+                        is RecognitionResult.BackendInfo -> {
+                        }
+                        is RecognitionResult.Insight -> {
                             logger.info("Insight: ${result.data}")
+                        }
                         is RecognitionResult.VadInfo ->
                             logger.info("Голосовая активность: ${if (result.hasVoice) "Есть голос" else "Нет голоса"}")
                         is RecognitionResult.Error -> {
@@ -81,7 +80,4 @@ fun main() {
                 }
             }
         }
-    } catch (e: Exception) {
-        logger.error("Произошла ошибка: ${e.message}", e)
-    }
 }
