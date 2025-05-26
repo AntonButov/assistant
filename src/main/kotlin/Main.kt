@@ -70,7 +70,6 @@ fun main() {
                             logger.info("Голосовая активность: ${if (result.hasVoice) "Есть голос" else "Нет голоса"}")
                         is RecognitionResult.Error -> {
                             logger.error("Ошибка: ${result.message}")
-                            // Если получаем ошибку аутентификации, обновляем токен и пробуем снова
                             if (result.message.contains("UNAUTHENTICATED")) {
                                 logger.info("Токен устарел, получаем новый...")
                                 authManager.refreshAccessToken()
