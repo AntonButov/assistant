@@ -5,6 +5,9 @@ import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
 import com.google.protobuf.ByteString
+import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
+import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
@@ -57,12 +60,14 @@ class SpeechKitClient(
 ) : Closeable {
 
     private val logger = Logger.getLogger(SpeechKitClient::class.java.name)
-    private val channel: ManagedChannel = ManagedChannelBuilder
-        .forAddress("smartspeech.sber.ru", 443)
+    private val channel = NettyChannelBuilder.forTarget("smartspeech.sber.ru")
         .useTransportSecurity()
-        // Отключаем проверку SSL-сертификатов
-        .overrideAuthority("smartspeech.sber.ru") // Важно сохранить правильный hostname
+        .sslContext(
+            GrpcSslContexts.forClient()
+            .trustManager(InsecureTrustManagerFactory.INSTANCE)
+            .build())
         .build()
+
     private val stub: SmartSpeechGrpc.SmartSpeechStub
 
     init {
