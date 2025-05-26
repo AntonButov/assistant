@@ -191,8 +191,6 @@ class SpeechKitClient(
             // Получаем requestObserver для отправки запросов
             val requestObserver = stub.recognize(streamObserver)
 
-            //   try {
-            // Отправляем сначала настройки
             logger.info("Отправка настроек распознавания...")
             requestObserver.onNext(optionsRequest)
 
@@ -201,22 +199,7 @@ class SpeechKitClient(
 
             logger.info("Сигнализация о завершении запроса...")
             requestObserver.onCompleted()
-            //    } catch (e: Exception) {
-            //    logger.info("Ошибка при отправке запроса")
-            //    trySend(RecognitionResult.Error("Ошибка при отправке запроса: ${e.message}", e))
-            //     requestObserver.onError(e)
-            //      close(e)
-//        }
 
-            // Закрываем Flow когда канал закрывается
-            awaitClose {
-                logger.info("Flow закрыт")
-            }
-        }.catch { e ->
-            // Перехватываем и отправляем любые ошибки как RecognitionResult.Error
-            emit(RecognitionResult.Error("Необработанная ошибка: ${e.message}", e))
-            logger.log(Level.SEVERE, "Необработанная ошибка в Flow", e)
-            logger.info("Flow закрыт из-за ошибки")
         }
 
     override fun close() {

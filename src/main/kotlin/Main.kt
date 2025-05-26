@@ -4,11 +4,13 @@ import SpeechKitAuth
 import SpeechKitClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Base64
+import java.util.logging.Level
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -50,7 +52,12 @@ fun main() {
             scope = scope,
         ).use { client ->
             CoroutineScope(Dispatchers.Unconfined).launch {
-                client.recognizeAsFlow(File(audioFilePath)).collect { result ->
+                client
+                    .recognizeAsFlow(File(audioFilePath))
+                    .catch { e ->
+                        logger.error("Необработанная ошибка в Flow", e)
+                    }
+                    .collect { result ->
                     when (result) {
                         is RecognitionResult.Transcription -> {
                             logger.info("Текст: ${result.text}")
