@@ -1,7 +1,3 @@
-package tech.antonbutov
-
-import SpeechKitAuth
-import SpeechKitClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
@@ -9,8 +5,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.Base64
-import java.util.logging.Level
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -36,7 +30,7 @@ fun main() {
     val audioFilePath = "outm.mp3"
 
     // Create a logger
-    val logger = org.slf4j.LoggerFactory.getLogger("Main")
+    val logger = java.util.logging.Logger.getLogger(SpeechKitAuth::class.java.name)
 
         // Создаем менеджер аутентификации с использованием Ktor
         val authManager = SpeechKitAuth(authorizationKey, scope)
@@ -53,30 +47,34 @@ fun main() {
                 client
                     .recognizeAsFlow(File(audioFilePath))
                     .catch { e ->
-                        logger.error("Необработанная ошибка в Flow", e)
+                        logger.info("Необработанная ошибка в Flow $e")
                     }
                     .collect { result ->
-                    when (result) {
-                        is RecognitionResult.Transcription -> {
-                            logger.info("Текст: ${result.text}")
-                            if (result.isFinal) logger.info("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: ${result.text}")
-                        }
-                        is RecognitionResult.BackendInfo -> {
-                        }
-                        is RecognitionResult.Insight -> {
-                            logger.info("Insight: ${result.data}")
-                        }
-                        is RecognitionResult.VadInfo ->
-                            logger.info("Голосовая активность: ${if (result.hasVoice) "Есть голос" else "Нет голоса"}")
-                        is RecognitionResult.Error -> {
-                            logger.error("Ошибка: ${result.message}")
-                            if (result.message.contains("UNAUTHENTICATED")) {
-                                logger.info("Токен устарел, получаем новый...")
-                                authManager.refreshAccessToken()
-                            }
-                        }
-                    }
+                    applyResult(result, logger, authManager)
                 }
             }
         }
+}
+
+private fun applyResult(result: RecognitionResult, logger: java.util.logging.Logger, authManager: SpeechKitAuth, ) {
+    when (result) {
+        is RecognitionResult.Transcription -> {
+            logger.info("Текст: ${result.text}")
+            if (result.isFinal) logger.info("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: ${result.text}")
+        }
+        is RecognitionResult.BackendInfo -> {
+        }
+        is RecognitionResult.Insight -> {
+            logger.info("Insight: ${result.data}")
+        }
+        is RecognitionResult.VadInfo ->
+            logger.info("Голосовая активность: ${if (result.hasVoice) "Есть голос" else "Нет голоса"}")
+        is RecognitionResult.Error -> {
+            logger.info("Ошибка: ${result.message}")
+            if (result.message.contains("UNAUTHENTICATED")) {
+                logger.info("Токен устарел, получаем новый...")
+                authManager.refreshAccessToken()
+            }
+        }
+    }
 }
