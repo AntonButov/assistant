@@ -148,7 +148,7 @@ class SpeechKitClient(
 
                                 if (resultText.isNotEmpty()) {
                                     trySend(RecognitionResult.Transcription(resultText, isEou))
-                                   // logger.info("Распознано: $resultText (финальный: $isEou)")
+                                    //logger.info("Распознано: $resultText (финальный: $isEou)")
                                 }
                             }
                             response.hasBackendInfo() -> {
@@ -196,6 +196,9 @@ class SpeechKitClient(
            // logger.info("Сигнализация о завершении запроса...")
             requestObserver.onCompleted()
 
+            awaitClose {
+              //  logger.info("Закрытие клиента распознавания речи")
+            }
         }
 
     override fun close() {
