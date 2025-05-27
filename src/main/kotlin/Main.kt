@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
@@ -30,7 +31,7 @@ fun main() {
     val audioFilePath = "outm.mp3"
 
     // Create a logger
-    val logger = java.util.logging.Logger.getLogger(SpeechKitAuth::class.java.name)
+    val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
 
         // Создаем менеджер аутентификации с использованием Ktor
         val authManager = SpeechKitAuth(authorizationKey, scope)
@@ -56,7 +57,7 @@ fun main() {
         }
 }
 
-private fun applyResult(result: RecognitionResult, logger: java.util.logging.Logger, authManager: SpeechKitAuth, ) {
+private fun applyResult(result: RecognitionResult, logger: Logger, authManager: SpeechKitAuth, ) {
     when (result) {
         is RecognitionResult.Transcription -> {
             logger.info("Текст: ${result.text}")
