@@ -1,31 +1,18 @@
-import TODO.Salutespeech
-import TODO.SmartSpeechGrpc
-import com.google.protobuf.ByteString
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
-import io.grpc.Metadata
-import io.grpc.stub.MetadataUtils
-import java.io.Closeable
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.logging.Level
-import java.util.logging.Logger
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import javax.sound.sampled.*
-import kotlin.concurrent.thread
 
     /**
      * Запись звука с микрофона и потоковое распознавание
      */
-    fun recordAndRecognize(
-        recordDurationSeconds: Int = 0, // 0 = запись до нажатия Enter
-        languageCode: String = "ru-RU",
-    ) {
+    fun recordAndRecognize(): Flow<ByteArray> {
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         // Создаем объект для захвата аудио
         val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
         if (!AudioSystem.isLineSupported(targetInfo)) {
            // logger.severe("Микрофон с указанным форматом не поддерживается")
-            return
+            throw IllegalArgumentException("Микрофон с указанным форматом не поддерживается")
         }
 
         val microphone = AudioSystem.getLine(targetInfo) as TargetDataLine
@@ -36,12 +23,17 @@ import kotlin.concurrent.thread
             val buffer = ByteArray(3200) // 100 мс аудио при 16кГц 16-бит
           //  isRecording = true
 
-        val bytesRead = microphone.read(buffer, 0, buffer.size)
-            // Запускаем таймер для автоматического завершения, если указана длительность
+        return callbackFlow<ByteArray> {
+            microphone.read(buffer, 0, buffer.size)
+
+            trySend(buffer)
 
             // Останавливаем запись
-       //     microphone.stop()
-       //     microphone.close()
 
+            awaitClose {
+                microphone.stop()
+                microphone.close()
+            }
+        }
     }
 
