@@ -143,7 +143,7 @@ class SpeechKitClient(
 
                                 val resultText =
                                     transcription.resultsList.joinToString(" ") { result ->
-                                        if (result.normalizedText.isNotEmpty()) result.normalizedText else result.text
+                                        result.normalizedText.ifEmpty { result.text }
                                     }
 
                                 if (resultText.isNotEmpty()) {
