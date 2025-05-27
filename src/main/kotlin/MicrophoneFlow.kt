@@ -1,12 +1,15 @@
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.withContext
+import java.util.logging.Logger
 import javax.sound.sampled.*
 
     /**
      * Запись звука с микрофона и потоковое распознавание
      */
-    fun recordAndRecognize(): Flow<ByteArray> {
+    fun microPhoneFlow(logger: Logger): Flow<ByteArray> {
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         // Создаем объект для захвата аудио
         val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
@@ -23,10 +26,15 @@ import javax.sound.sampled.*
             val buffer = ByteArray(3200) // 100 мс аудио при 16кГц 16-бит
           //  isRecording = true
 
-        return callbackFlow<ByteArray> {
-            microphone.read(buffer, 0, buffer.size)
-
-            trySend(buffer)
+        return callbackFlow {
+            withContext(Dispatchers.IO) {
+                while (true) {
+                    microphone.read(buffer, 0, buffer.size).also {
+                        logger.info("sended : $it")
+                    }
+                    trySend(buffer)
+                }
+            }
 
             // Останавливаем запись
 

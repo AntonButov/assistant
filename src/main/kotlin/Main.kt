@@ -46,7 +46,8 @@ fun main() {
         ).use { client ->
             CoroutineScope(Dispatchers.Unconfined).launch {
                 client
-                    .recognizeAsFlow(File(audioFilePath))
+                    .recognizeFile(File(audioFilePath))
+                    //.recognizeMicrophone()
                     .catch { e ->
                         logger.info("Необработанная ошибка в Flow $e")
                     }

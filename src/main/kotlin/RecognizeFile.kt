@@ -1,7 +1,5 @@
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
-import io.grpc.ManagedChannel
-import io.grpc.ManagedChannelBuilder
 import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
 import com.google.protobuf.ByteString
@@ -11,10 +9,8 @@ import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -89,23 +85,11 @@ class SpeechKitClient(
 
     }
 
-    private fun fileFlow(audioFile: File): Flow<ByteArray> = flow {
-        logger.info("Чтение аудиофайла: ${audioFile.absolutePath}")
+    fun recognizeMicrophone() =
+        microPhoneFlow(logger).bytesToArray()
 
-        if (!audioFile.exists()) {
-            throw IllegalArgumentException("Файл не существует: ${audioFile.absolutePath}")
-        }
-
-        val audioBytes = audioFile.readBytes()
-        logger.info("Прочитано ${audioBytes.size} байт")
-        emit(audioBytes)
-    }
-
-    /**
-     * Отправляет аудиофайл на распознавание и возвращает Flow с результатами
-     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun recognizeAsFlow(
+    fun recognizeFile(
         audioFile: File,
         languageCode: String = "ru-RU",
         sampleRate: Int = 16000,
@@ -118,6 +102,8 @@ class SpeechKitClient(
         languageCode: String = "ru-RU",
         sampleRate: Int = 16000
     ): Flow<RecognitionResult> = flatMapLatest { audioBytes ->
+
+        logger.info("получено байт ${audioBytes.size}")
 
         callbackFlow {
             // Настраиваем опции распознавания
