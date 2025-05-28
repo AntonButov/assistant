@@ -7,7 +7,6 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
-import javax.sound.sampled.AudioFormat
 
 fun disableSSLVerification() {
     val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
@@ -32,32 +31,75 @@ fun main() {
     val logger = Logger.getLogger("SpeechRecognition")
     logger.info("Запуск приложения распознавания речи")
 
-    // Определяем файл для записи
-    val recordedFile = File("")
-        // Создаем менеджер аутентификации с использованием Ktor
-        val authManager = SpeechKitAuth(authorizationKey, scope)
+    // Файл для записи
+    val recordedFile = File("recorded_audio.wav")
 
-        // Получаем токен доступа
-        val accessToken = authManager.getAccessToken()
+    runBlocking {
+        try {
+            // Получаем токен авторизации
+            val authManager = SpeechKitAuth(authorizationKey, scope)
+            val accessToken = authManager.getAccessToken()
 
-        // Используем токен для распознавания речи
-        SpeechKitClient(
-            accessKey = accessToken,
-            scope = scope,
-        ).also { client ->
-            runBlocking {
-                client
-                   // .recognizeFile(File(audioFilePath))
-                    .recognizeMicrophone()
-                    .catch { e ->
-                        logger.info("Необработанная ошибка в Flow $e")
-                    }
-                    .collect { result ->
-                    logger.info("result = $result")
-                    applyResult(result, logger, authManager)
+            // Создаем менеджер микрофона
+            val microphoneManager = MicrophoneSharedFlow(
+                scope = this,
+                logger = logger
+            )
+
+            // Запускаем запись в файл
+            val fileWriteJob = launch {
+              //  writeAudioToFile(
+               //     microphoneManager.audioFlow,
+              //      recordedFile,
+              //      microphoneManager.getAudioFormat(),
+              //      logger
+            //    )
+            }
+
+            // Запускаем распознавание речи
+            val recognitionJob = launch {
+                SpeechKitClient(
+                    accessKey = accessToken,
+                    scope = scope
+                ).use { client ->
+                    microphoneManager.audioFlow
+                        .catch { e -> logger.severe("Ошибка при обработке аудиопотока: ${e.message}") }
+                        .collect { audioChunk ->
+                            // Отправляем чанки на распознавание
+                           // client.recognize(audioChunk)
+                           //     .collect { result ->
+                           //         applyResult(result, logger, authManager)
+                           //     }
+                        }
                 }
             }
+
+            // Запускаем микрофон
+            if (microphoneManager.start()) {
+                logger.info("Запись с микрофона успешно начата")
+
+                // Записываем и распознаем 20 секунд
+                delay(20000)
+
+                // Останавливаем запись
+                microphoneManager.stop()
+                logger.info("Запись с микрофона остановлена")
+
+                // Отменяем корутины записи и распознавания
+                fileWriteJob.cancelAndJoin()
+                recognitionJob.cancelAndJoin()
+
+                logger.info("Все задачи завершены")
+            } else {
+                logger.severe("Не удалось запустить запись с микрофона")
+            }
+        } catch (e: Exception) {
+            logger.severe("Ошибка выполнения: ${e.message}")
+            e.printStackTrace()
         }
+    }
+
+    logger.info("Программа завершена")
 }
 
 private fun applyResult(result: RecognitionResult, logger: Logger, authManager: SpeechKitAuth, ) {

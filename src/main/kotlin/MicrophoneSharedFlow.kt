@@ -1,81 +1,119 @@
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Logger
 import javax.sound.sampled.*
 
-fun createMicrophoneSharedFlow(
-    scope: CoroutineScope,
-    logger: Logger
-): Pair<SharedFlow<ByteArray>, kotlinx.coroutines.Job> {
+class MicrophoneSharedFlow(
+    private val sampleRate: Float = 16000f,
+    private val sampleSizeInBits: Int = 16,
+    private val channels: Int = 1,
+    private val scope: CoroutineScope,
+    private val logger: Logger
+) {
+    // Поток аудиоданных доступный извне
+    private val _audioFlow = MutableStateFlow<ByteArray>(byteArrayOf())
+    val audioFlow: SharedFlow<ByteArray> = _audioFlow.asSharedFlow()
 
-    // Создаем SharedFlow с буфером для обеспечения надежности
-    val audioFlow = MutableSharedFlow<ByteArray>(
-        replay = 5,    // Хранить последние 5 фрагментов для новых подписчиков
-        extraBufferCapacity = 10  // Дополнительный буфер для предотвращения блокировок
-    )
+    // Внутренние переменные для управления состоянием
+    private var microphone: TargetDataLine? = null
+    private var recordingJob: Job? = null
+    private val isRunning = AtomicBoolean(false)
 
-    logger.info("Инициализация SharedFlow микрофона")
+    /**
+     * Начать запись с микрофона
+     * @return true если запись успешно начата, false в противном случае
+     */
+    fun start(): Boolean {
+        if (isRunning.getAndSet(true)) {
+            logger.info("Запись уже идет")
+            return false
+        }
 
-    // Запускаем сбор аудио в отдельной корутине
-    val job = scope.launch(Dispatchers.IO) {
         try {
-            val audioFormat = AudioFormat(16000f, 16, 1, true, false)
+            logger.info("Настройка микрофона")
+
+            // Настраиваем формат аудио
+            val audioFormat = AudioFormat(sampleRate, sampleSizeInBits, channels, true, false)
             val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
 
-            logger.info("Проверка поддержки микрофона")
-
+            // Проверяем поддержку микрофона
             if (!AudioSystem.isLineSupported(targetInfo)) {
                 logger.severe("Микрофон с указанным форматом не поддерживается")
-                throw IllegalStateException("Микрофон с указанным форматом не поддерживается")
+                isRunning.set(false)
+                return false
             }
 
-            // Настраиваем микрофон
-            val microphone = AudioSystem.getLine(targetInfo) as TargetDataLine
-            microphone.open(audioFormat)
-            microphone.start()
+            // Инициализируем микрофон
+            microphone = AudioSystem.getLine(targetInfo) as TargetDataLine
+            microphone?.open(audioFormat)
+            microphone?.start()
 
-            // Буфер для чтения аудио (размер для 100 мс аудио при 16кГц, 16-бит, моно)
-            val buffer = ByteArray(1600)
-            var totalBytesRead = 0
+            // Запускаем корутину для сбора аудиоданных
+           // recordingJob = scope.launch(Dispatchers.IO) {
+                logger.info("Начало записи с микрофона")
 
-            logger.info("Начинаем сбор аудио с микрофона")
+                val buffer = ByteArray(1600) // 100мс аудио при 16кГц, 16бит, моно
+                var totalBytesRead = 0
 
-            try {
-                // Цикл сбора аудио
-                while (true) {
-                    val bytesRead = microphone.read(buffer, 0, buffer.size)
-                    if (bytesRead > 0) {
-                        val audioChunk = buffer.copyOfRange(0, bytesRead)
+                try {
+                    while (isRunning.get()) {
+                        microphone?.let { mic ->
+                            val bytesRead = mic.read(buffer, 0, buffer.size)
+                            if (bytesRead > 0) {
+                                val audioChunk = buffer.copyOfRange(0, bytesRead)
+                                _audioFlow.update { audioChunk }
 
-                        // Отправляем в SharedFlow
-                        audioFlow.emit(audioChunk)
-
-                        totalBytesRead += bytesRead
-                        if (totalBytesRead % 16000 == 0) {  // Примерно каждую секунду
-                            logger.info("Собрано с микрофона: ${totalBytesRead / 1024} KB")
-                        }
-
-                        // Небольшая задержка для предотвращения перегрузки процессора
-                        delay(10)
+                                totalBytesRead += bytesRead
+                                if (totalBytesRead % 16000 == 0) { // Примерно каждую секунду
+                                    logger.info("Собрано с микрофона: ${totalBytesRead / 1024} KB")
+                                }
+                            }
+                          //  delay(5) // Небольшая задержка для предотвращения перегрузки CPU
+                        } ?: break // Если микрофон null, выходим из цикла
                     }
+                } catch (e: CancellationException) {
+                    logger.info("Корутина сбора аудио отменена")
+                    throw e
+                } catch (e: Exception) {
+                    logger.severe("Ошибка при записи с микрофона: ${e.message}")
+                    isRunning.set(false)
                 }
-            } finally {
-                // Освобождаем ресурсы микрофона при завершении
-                logger.info("Закрытие микрофона")
-                microphone.stop()
-                microphone.close()
-            }
+
+                logger.info("Запись с микрофона завершена, собрано ${totalBytesRead / 1024} KB")
+         //   }
+
+            return true
         } catch (e: Exception) {
-            logger.severe("Ошибка при работе с микрофоном: ${e.message}")
-            throw e
+            logger.severe("Ошибка при инициализации микрофона: ${e.message}")
+            stop() // Очищаем ресурсы в случае ошибки
+            return false
         }
     }
 
-    // Возвращаем SharedFlow и job для управления сбором
-    return audioFlow.asSharedFlow() to job
+    /**
+     * Остановить запись с микрофона
+     */
+    fun stop() {
+        if (!isRunning.getAndSet(false)) {
+            logger.info("Запись уже остановлена")
+            return
+        }
+
+        logger.info("Остановка записи с микрофона")
+
+        // Отменяем корутину
+        recordingJob?.cancel()
+        recordingJob = null
+
+        // Освобождаем ресурсы микрофона
+        try {
+            microphone?.stop()
+            microphone?.close()
+            microphone = null
+            logger.info("Микрофон успешно остановлен")
+        } catch (e: Exception) {
+            logger.warning("Ошибка при остановке микрофона: ${e.message}")
+        }
+    }
 }
