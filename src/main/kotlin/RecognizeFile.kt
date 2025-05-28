@@ -86,7 +86,8 @@ class SpeechKitClient(
     }
 
     fun recognizeMicrophone() =
-        microPhoneFlow(logger).bytesToArray()
+        microphoneFlow(logger)
+            .bytesToArray()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun recognizeFile(

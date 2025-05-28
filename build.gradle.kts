@@ -46,9 +46,6 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
-    // SLF4J + Logback
-    implementation("ch.qos.logback:logback-classic:1.4.11")
-
     // Kotlin
     implementation(kotlin("stdlib-jdk8"))
 }

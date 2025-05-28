@@ -1,7 +1,10 @@
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -31,7 +34,9 @@ fun main() {
     val audioFilePath = "outm.mp3"
 
     // Create a logger
-    val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
+    val logger = Logger.getLogger(SpeechKitClient::class.java.name)
+
+    logger.info("Start")
 
         // Создаем менеджер аутентификации с использованием Ktor
         val authManager = SpeechKitAuth(authorizationKey, scope)
@@ -43,15 +48,16 @@ fun main() {
         SpeechKitClient(
             accessKey = accessToken,
             scope = scope,
-        ).use { client ->
-            CoroutineScope(Dispatchers.Unconfined).launch {
+        ).also { client ->
+            runBlocking {
                 client
-                    .recognizeFile(File(audioFilePath))
-                    //.recognizeMicrophone()
+                    //.recognizeFile(File(audioFilePath))
+                    .recognizeMicrophone()
                     .catch { e ->
                         logger.info("Необработанная ошибка в Flow $e")
                     }
                     .collect { result ->
+                    logger.info("result = $result")
                     applyResult(result, logger, authManager)
                 }
             }

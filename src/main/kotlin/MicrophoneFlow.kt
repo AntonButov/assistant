@@ -1,47 +1,57 @@
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flowOn
 import java.util.logging.Logger
 import javax.sound.sampled.*
 
-    /**
-     * Запись звука с микрофона и потоковое распознавание
-     */
-    fun microPhoneFlow(logger: Logger): Flow<ByteArray> {
+/**
+ * Creates a flow that emits audio data from the microphone
+ */
+fun microphoneFlow(logger: Logger): Flow<ByteArray> {
+
+    logger.info("Starting microphone flow")
+
+    return callbackFlow {
+
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
-        // Создаем объект для захвата аудио
         val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
+
+        logger.info("Checking if microphone is supported")
+
         if (!AudioSystem.isLineSupported(targetInfo)) {
-           // logger.severe("Микрофон с указанным форматом не поддерживается")
-            throw IllegalArgumentException("Микрофон с указанным форматом не поддерживается")
+            close(IllegalStateException("Микрофон с указанным форматом не поддерживается"))
+            return@callbackFlow
         }
 
         val microphone = AudioSystem.getLine(targetInfo) as TargetDataLine
         microphone.open(audioFormat)
         microphone.start()
 
-            // Буфер для чтения аудиоданных
-            val buffer = ByteArray(3200) // 100 мс аудио при 16кГц 16-бит
-          //  isRecording = true
+        val buffer = ByteArray(1600) // 100 ms of audio at 16kHz 16-bit
 
-        return callbackFlow {
-            withContext(Dispatchers.IO) {
-                while (true) {
-                    microphone.read(buffer, 0, buffer.size).also {
-                        logger.info("sended : $it")
-                    }
-                    trySend(buffer)
-                }
+        logger.info("Start cycle")
+
+        (1..10).forEach {
+            val bytesRead = microphone.read(buffer, 0, buffer.size)
+            if (bytesRead > 0) {
+                val audioChunk = buffer.copyOfRange(0, bytesRead)
+                logger.info("Sent audio chunk: ${bytesRead} bytes")
+                trySend(audioChunk)
+                // logger.severe("Микрофон с указанным форматом не поддерживается")
+                // Буфер для чтения аудиоданных
+
             }
-
-            // Останавливаем запись
-
-            awaitClose {
-                microphone.stop()
-                microphone.close()
-            }
+            delay(1000)
         }
-    }
+
+        awaitClose {
+            microphone.stop()
+            microphone.close()
+        }
+
+    }.flowOn(Dispatchers.IO)
+}
 
