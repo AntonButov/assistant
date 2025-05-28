@@ -51,7 +51,7 @@ fun main() {
         ).also { client ->
             runBlocking {
                 client
-                    //.recognizeFile(File(audioFilePath))
+                   // .recognizeFile(File(audioFilePath))
                     .recognizeMicrophone()
                     .catch { e ->
                         logger.info("Необработанная ошибка в Flow $e")

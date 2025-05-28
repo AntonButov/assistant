@@ -30,7 +30,7 @@ fun microphoneFlow(logger: Logger): Flow<ByteArray> {
         microphone.open(audioFormat)
         microphone.start()
 
-        val buffer = ByteArray(1600) // 100 ms of audio at 16kHz 16-bit
+        val buffer = ByteArray(10000) // 100 ms of audio at 16kHz 16-bit
 
         logger.info("Start cycle")
 
@@ -44,7 +44,7 @@ fun microphoneFlow(logger: Logger): Flow<ByteArray> {
                 // Буфер для чтения аудиоданных
 
             }
-            delay(1000)
+            delay(2000)
         }
 
         awaitClose {
