@@ -2,8 +2,8 @@ plugins {
     kotlin("jvm") version libs.versions.kotlin
     id("com.google.protobuf") version "0.9.3"
     alias(libs.plugins.ktlint)
-    id("de.jensklingenberg.ktorfit") version "1.10.2" // Добавляем плагин Ktorfit
-    kotlin("plugin.serialization") version libs.versions.kotlin // Для kotlinx.serialization
+    id("de.jensklingenberg.ktorfit") version "1.10.2"
+    kotlin("plugin.serialization") version libs.versions.kotlin
     application
 }
 
@@ -21,11 +21,14 @@ val grpcKotlinVersion = "1.3.0"
 val protobufVersion = "3.24.0"
 val ktorfitVersion = "1.10.2"
 val ktorVersion = "2.3.7"
+val coroutinesVersion = "1.7.3" // Обновлено для лучшей поддержки SharedFlow
 
 dependencies {
-    // gRPC
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
 
+    // gRPC
     implementation("io.grpc:grpc-netty-shaded:$grpcVersion")
     implementation("io.grpc:grpc-protobuf:$grpcVersion")
     implementation("io.grpc:grpc-stub:$grpcVersion")
@@ -46,8 +49,25 @@ dependencies {
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
+    // Logging
+    implementation("org.slf4j:slf4j-api:2.0.9")
+    implementation("ch.qos.logback:logback-classic:1.4.11")
+
     // Kotlin
     implementation(kotlin("stdlib-jdk8"))
+    implementation(kotlin("reflect"))
+}
+
+// Настройка Ktorfit
+ktorfit {
+    version = ktorfitVersion
+}
+
+// Остальная часть файла остается без изменений
+// ...
+
+application {
+    mainClass.set("MainKt")
 }
 
 // Настройка Ktorfit

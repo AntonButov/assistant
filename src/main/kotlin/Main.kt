@@ -1,10 +1,5 @@
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -12,6 +7,7 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import javax.sound.sampled.AudioFormat
 
 fun disableSSLVerification() {
     val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
@@ -27,17 +23,17 @@ fun disableSSLVerification() {
 
 fun main() {
     disableSSLVerification()
-    // Создаем Basic Auth ключ (Base64 от "clientId:clientSecret")
+
+    // Создаем Basic Auth ключ
     val authorizationKey = "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
-
     val scope = "SALUTE_SPEECH_PERS"
-    val audioFilePath = "outm.mp3"
 
-    // Create a logger
-    val logger = Logger.getLogger(SpeechKitClient::class.java.name)
+    // Создаем логгер
+    val logger = Logger.getLogger("SpeechRecognition")
+    logger.info("Запуск приложения распознавания речи")
 
-    logger.info("Start")
-
+    // Определяем файл для записи
+    val recordedFile = File("")
         // Создаем менеджер аутентификации с использованием Ktor
         val authManager = SpeechKitAuth(authorizationKey, scope)
 
