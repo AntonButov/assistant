@@ -1,3 +1,4 @@
+import LoggerAssistant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharedFlow
@@ -118,7 +119,7 @@ fun main() {
 
     line.stop()
     line.close()
-    println("Запись завершена.")
+    LoggerAssistant.info("Запись завершена.")
 
     // Сохранение в WAV-файл
     val audioBytes = out.toByteArray()
@@ -127,5 +128,5 @@ fun main() {
 
     val wavFile = File("recorded_audio.wav")
     AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile)
-    println("Файл сохранен как ${wavFile.absolutePath}")
+    LoggerAssistant.info("Файл сохранен как ${wavFile.absolutePath}")
 }
