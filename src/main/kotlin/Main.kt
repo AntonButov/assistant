@@ -7,6 +7,7 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import javax.sound.sampled.spi.AudioFileWriter
 
 fun disableSSLVerification() {
     val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
@@ -36,6 +37,8 @@ fun main() {
 
     val microphoneManager = MicrophoneSharedFlow()
 
+    val audioFileWriter = WriterAudio(recordedFile)
+
     CoroutineScope(Dispatchers.IO).launch {
         try {
             // Получаем токен авторизации
@@ -45,19 +48,22 @@ fun main() {
             // Создаем менеджер микрофона
 
             microphoneManager.start()
-            microphoneManager.audioFlow.collect {
+            microphoneManager
+                .audioFlow
+                .collect {
                 logger.info("Получен аудиопоток size: ${it.size}")
+                audioFileWriter.writeBytes(it)
             }
 
             // Запускаем запись в файл
-       //     val fileWriteJob = launch {
-              //  writeAudioToFile(
-               //     microphoneManager.audioFlow,
-              //      recordedFile,
-              //      microphoneManager.getAudioFormat(),
-              //      logger
+            //     val fileWriteJob = launch {
+            //  writeAudioToFile(
+            //     microphoneManager.audioFlow,
+            //      recordedFile,
+            //      microphoneManager.getAudioFormat(),
+            //      logger
             //    )
-       //     }
+            //     }
 
             // Запускаем распознавание речи
           //  val recognitionJob = launch {
@@ -101,6 +107,7 @@ fun main() {
             logger.info("Ошибка выполнения: ${e.message}")
             e.printStackTrace()
         }
+        audioFileWriter.finish()
     }
 
     runBlocking {
