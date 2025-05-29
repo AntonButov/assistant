@@ -22,28 +22,31 @@ class WriterAudio(
         // Подготавливаем файл для записи
         outputFile.parentFile?.mkdirs()
         if (outputFile.exists()) outputFile.delete()
+        outputFile.createNewFile()
         writeWavHeader(rafWav, 0, audioFormat)
     }
 
     // Используем RandomAccessFile для записи в WAV-файл
     // Записываем заглушку заголовка WAV (44 байта)
     // Счетчик записанных байт
-    val totalBytesWritten = AtomicInteger(0)
+    var totalBytesWritten = 0
 
     fun finish() {
-        writeWavHeader(rafWav, totalBytesWritten.get(), audioFormat)
+        writeWavHeader(rafWav, totalBytesWritten, audioFormat)
         rafWav.close()
-        LoggerAssistant.info("Запись в файл завершена, сохранено ${totalBytesWritten.get() / 1024} KB")
+        LoggerAssistant.info("Запись в файл завершена, сохранено ${totalBytesWritten / 1024} KB")
     }
 
     fun writeBytes(
         audioChunk: ByteArray,
     ) {
-        val position = 44 + totalBytesWritten.get()
+        LoggerAssistant.info("Записываем ${audioChunk.size} байт")
+        val position = 44 + totalBytesWritten
         rafWav.seek(position.toLong())
         rafWav.write(audioChunk)
         // Увеличиваем счетчик
-        totalBytesWritten.addAndGet(audioChunk.size)
+        totalBytesWritten += audioChunk.size
+        LoggerAssistant.info("Записано ${totalBytesWritten / 1024} KB")
         }
 
     // Функция для записи WAV-заголовка

@@ -10,7 +10,7 @@ import javax.sound.sampled.*
  */
 class MicrophoneSharedFlow() {
     // Поток аудиоданных доступный извне
-    private val _audioFlow = MutableStateFlow<ByteArray>(byteArrayOf())
+    private val _audioFlow = MutableSharedFlow<ByteArray>()
 
     private val logger = LoggerAssistant
     val audioFlow: SharedFlow<ByteArray> = _audioFlow.asSharedFlow()
@@ -62,7 +62,7 @@ class MicrophoneSharedFlow() {
                             val bytesRead = mic.read(buffer, 0, buffer.size)
                             if (bytesRead > 0) {
                                 val audioChunk = buffer.copyOfRange(0, bytesRead)
-                                _audioFlow.update { audioChunk }
+                                _audioFlow.tryEmit( audioChunk )
 
                                 totalBytesRead += bytesRead
                                 if (totalBytesRead % 16000 == 0) { // Примерно каждую секунду

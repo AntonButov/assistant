@@ -1,3 +1,4 @@
+import LoggerAssistant
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.File
@@ -7,6 +8,7 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.spi.AudioFileWriter
 
 fun disableSSLVerification() {
@@ -22,6 +24,16 @@ fun disableSSLVerification() {
 }
 
 fun main() {
+
+  //  val file = File("/Users/antonbutov/StudioProjects/assistant/test.wav")
+  //  if (file.exists()) file.delete()
+  //  file.parentFile?.mkdirs()
+  //  val raf = java.io.RandomAccessFile(file, "rw")
+  //  raf.write(ByteArray(1000) { 1 })
+  //  raf.close()
+  //  println("Exists: ${file.exists()} Size: ${file.length()}")
+
+   // return
     disableSSLVerification()
 
     // Создаем Basic Auth ключ
@@ -53,6 +65,9 @@ fun main() {
                 .collect {
                 logger.info("Получен аудиопоток size: ${it.size}")
                 audioFileWriter.writeBytes(it)
+                audioFileWriter.finish()
+
+                    AudioSystem.write
             }
 
             // Запускаем запись в файл
@@ -107,14 +122,16 @@ fun main() {
             logger.info("Ошибка выполнения: ${e.message}")
             e.printStackTrace()
         }
-        audioFileWriter.finish()
     }
 
     runBlocking {
         delay(10000)
+       // audioFileWriter.finish()
     }
 
+
     microphoneManager.stop()
+    LoggerAssistant.info("Файл: ${recordedFile.absolutePath} Exists: ${recordedFile.exists()} Size: ${recordedFile.length()}")
 
     logger.info("Программа завершена")
 }
