@@ -28,53 +28,57 @@ fun main() {
     val scope = "SALUTE_SPEECH_PERS"
 
     // Создаем логгер
-    val logger = Logger.getLogger("SpeechRecognition")
+    val logger = LoggerAssistant
     logger.info("Запуск приложения распознавания речи")
 
     // Файл для записи
     val recordedFile = File("recorded_audio.wav")
 
-    runBlocking {
+    val microphoneManager = MicrophoneSharedFlow()
+
+    CoroutineScope(Dispatchers.IO).launch {
         try {
             // Получаем токен авторизации
             val authManager = SpeechKitAuth(authorizationKey, scope)
             val accessToken = authManager.getAccessToken()
 
             // Создаем менеджер микрофона
-            val microphoneManager = MicrophoneSharedFlow(
-                scope = this,
-                logger = logger
-            )
+
+            microphoneManager.start()
+            microphoneManager.audioFlow.collect {
+                logger.info("Получен аудиопоток size: ${it.size}")
+            }
 
             // Запускаем запись в файл
-            val fileWriteJob = launch {
+       //     val fileWriteJob = launch {
               //  writeAudioToFile(
                //     microphoneManager.audioFlow,
               //      recordedFile,
               //      microphoneManager.getAudioFormat(),
               //      logger
             //    )
-            }
+       //     }
 
             // Запускаем распознавание речи
-            val recognitionJob = launch {
-                SpeechKitClient(
-                    accessKey = accessToken,
-                    scope = scope
-                ).use { client ->
-                    microphoneManager.audioFlow
-                        .catch { e -> logger.severe("Ошибка при обработке аудиопотока: ${e.message}") }
-                        .collect { audioChunk ->
+          //  val recognitionJob = launch {
+        //        SpeechKitClient(
+         //           accessKey = accessToken,
+        //            scope = scope
+         //       ).use { client ->
+                  //  microphoneManager.audioFlow
+                  //      .catch { e -> logger.info("Ошибка при обработке аудиопотока: ${e.message}") }
+                  //      .collect { audioChunk ->
                             // Отправляем чанки на распознавание
                            // client.recognize(audioChunk)
                            //     .collect { result ->
                            //         applyResult(result, logger, authManager)
                            //     }
-                        }
-                }
-            }
+                 //       }
+              //  }
+        //    }
 
             // Запускаем микрофон
+            microphoneManager.start()
             if (microphoneManager.start()) {
                 logger.info("Запись с микрофона успешно начата")
 
@@ -86,18 +90,24 @@ fun main() {
                 logger.info("Запись с микрофона остановлена")
 
                 // Отменяем корутины записи и распознавания
-                fileWriteJob.cancelAndJoin()
-                recognitionJob.cancelAndJoin()
+             //   fileWriteJob.cancelAndJoin()
+            //    recognitionJob.cancelAndJoin()
 
                 logger.info("Все задачи завершены")
             } else {
-                logger.severe("Не удалось запустить запись с микрофона")
+                logger.info("Не удалось запустить запись с микрофона")
             }
         } catch (e: Exception) {
-            logger.severe("Ошибка выполнения: ${e.message}")
+            logger.info("Ошибка выполнения: ${e.message}")
             e.printStackTrace()
         }
     }
+
+    runBlocking {
+        delay(10000)
+    }
+
+    microphoneManager.stop()
 
     logger.info("Программа завершена")
 }

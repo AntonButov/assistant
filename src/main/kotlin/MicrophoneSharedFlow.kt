@@ -1,18 +1,18 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.logging.Level
 import java.util.logging.Logger
 import javax.sound.sampled.*
 
-class MicrophoneSharedFlow(
-    private val sampleRate: Float = 16000f,
-    private val sampleSizeInBits: Int = 16,
-    private val channels: Int = 1,
-    private val scope: CoroutineScope,
-    private val logger: Logger
-) {
+/**
+ * Класс для работы с микрофоном и получения аудиоданных через Flow
+ */
+class MicrophoneSharedFlow() {
     // Поток аудиоданных доступный извне
     private val _audioFlow = MutableStateFlow<ByteArray>(byteArrayOf())
+
+    private val logger = LoggerAssistant
     val audioFlow: SharedFlow<ByteArray> = _audioFlow.asSharedFlow()
 
     // Внутренние переменные для управления состоянием
@@ -31,15 +31,15 @@ class MicrophoneSharedFlow(
         }
 
         try {
-            logger.info("Настройка микрофона")
+            LoggerAssistant.info("Настройка микрофона")
 
             // Настраиваем формат аудио
-            val audioFormat = AudioFormat(sampleRate, sampleSizeInBits, channels, true, false)
+            val audioFormat = AudioFormat(16000f, 16, 1, true, false)
             val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
 
             // Проверяем поддержку микрофона
             if (!AudioSystem.isLineSupported(targetInfo)) {
-                logger.severe("Микрофон с указанным форматом не поддерживается")
+                logger.info("Микрофон с указанным форматом не поддерживается")
                 isRunning.set(false)
                 return false
             }
@@ -50,7 +50,7 @@ class MicrophoneSharedFlow(
             microphone?.start()
 
             // Запускаем корутину для сбора аудиоданных
-           // recordingJob = scope.launch(Dispatchers.IO) {
+         //   recordingJob = scope.launch(Dispatchers.IO) {
                 logger.info("Начало записи с микрофона")
 
                 val buffer = ByteArray(1600) // 100мс аудио при 16кГц, 16бит, моно
@@ -69,23 +69,21 @@ class MicrophoneSharedFlow(
                                     logger.info("Собрано с микрофона: ${totalBytesRead / 1024} KB")
                                 }
                             }
-                          //  delay(5) // Небольшая задержка для предотвращения перегрузки CPU
+                            //delay(5) // Небольшая задержка для предотвращения перегрузки CPU
                         } ?: break // Если микрофон null, выходим из цикла
                     }
                 } catch (e: CancellationException) {
                     logger.info("Корутина сбора аудио отменена")
                     throw e
                 } catch (e: Exception) {
-                    logger.severe("Ошибка при записи с микрофона: ${e.message}")
+                    logger.info("Ошибка при записи с микрофона: ${e.message}")
                     isRunning.set(false)
                 }
-
-                logger.info("Запись с микрофона завершена, собрано ${totalBytesRead / 1024} KB")
-         //   }
+           // }
 
             return true
         } catch (e: Exception) {
-            logger.severe("Ошибка при инициализации микрофона: ${e.message}")
+            logger.info("Ошибка при инициализации микрофона: ${e.message}")
             stop() // Очищаем ресурсы в случае ошибки
             return false
         }
@@ -96,11 +94,8 @@ class MicrophoneSharedFlow(
      */
     fun stop() {
         if (!isRunning.getAndSet(false)) {
-            logger.info("Запись уже остановлена")
             return
         }
-
-        logger.info("Остановка записи с микрофона")
 
         // Отменяем корутину
         recordingJob?.cancel()
@@ -113,7 +108,7 @@ class MicrophoneSharedFlow(
             microphone = null
             logger.info("Микрофон успешно остановлен")
         } catch (e: Exception) {
-            logger.warning("Ошибка при остановке микрофона: ${e.message}")
+            logger.info("Ошибка при остановке микрофона: ${e.message}")
         }
     }
 }
