@@ -67,7 +67,7 @@ fun main() {
                 audioFileWriter.writeBytes(it)
                 audioFileWriter.finish()
 
-                    AudioSystem.write
+                  //  AudioSystem.write
             }
 
             // Запускаем запись в файл
