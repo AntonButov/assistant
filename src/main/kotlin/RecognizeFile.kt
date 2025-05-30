@@ -98,6 +98,8 @@ class SpeechKitClient(
         fileFlow(audioFile)
             .bytesToArray(languageCode, sampleRate)
 
+    fun recognizeFlow(flow: Flow<ByteArray>): Flow<RecognitionResult> = flow.bytesToArray()
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun Flow<ByteArray>.bytesToArray(
         languageCode: String = "ru-RU",

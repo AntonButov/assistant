@@ -28,39 +28,46 @@ fun main() {
     disableSSLVerification()
 
     // Создаем Basic Auth ключ
-    val authorizationKey = "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
+    val authorizationKey =
+        "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
     val scope = "SALUTE_SPEECH_PERS"
 
     val authManager = SpeechKitAuth(authorizationKey, scope)
     val accessToken = authManager.getAccessToken()
 
-    // Создаем логгер
-    val logger = LoggerAssistant
+    val speechKitClient = SpeechKitClient(accessToken)
 
     val microphoneSgaredFlow = MicrophoneSharedFlow()
 
     CoroutineScope(Dispatchers.IO).launch {
-        microphoneSgaredFlow.audioFlow.collect {
-            logger.info("Получен аудиофрейм ${it.size} байт")
-        }
+        speechKitClient
+            .recognizeFlow(microphoneSgaredFlow.audioFlow)
+            .collect { result ->
+                applyResult(result, authManager)
+            }
     }
 
     microphoneSgaredFlow.run()
 }
 
-private fun applyResult(result: RecognitionResult, logger: Logger, authManager: SpeechKitAuth, ) {
+    fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {
+        val logger = LoggerAssistant
     when (result) {
         is RecognitionResult.Transcription -> {
             logger.info("Текст: ${result.text}")
             if (result.isFinal) logger.info("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: ${result.text}")
         }
+
         is RecognitionResult.BackendInfo -> {
         }
+
         is RecognitionResult.Insight -> {
             logger.info("Insight: ${result.data}")
         }
+
         is RecognitionResult.VadInfo ->
             logger.info("Голосовая активность: ${if (result.hasVoice) "Есть голос" else "Нет голоса"}")
+
         is RecognitionResult.Error -> {
             logger.info("Ошибка: ${result.message}")
             if (result.message.contains("UNAUTHENTICATED")) {
