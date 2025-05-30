@@ -13,7 +13,7 @@ import javax.sound.sampled.*
  */
 class MicrophoneSharedFlow() {
     // Поток аудиоданных доступный извне
-    private val _audioFlow = MutableSharedFlow<ByteArray>()
+    private val _audioFlow = MutableSharedFlow<ByteArray>(extraBufferCapacity = 1)
 
     private val logger = LoggerAssistant
     val audioFlow: SharedFlow<ByteArray> = _audioFlow.asSharedFlow()
@@ -35,28 +35,17 @@ class MicrophoneSharedFlow() {
 
         LoggerAssistant.info("Начало записи...")
 
-        val out = ByteArrayOutputStream()
         val buffer = ByteArray(1024)
         var bytesRead: Int
 
         val stopTime = System.currentTimeMillis() + 15000
         while (System.currentTimeMillis() < stopTime) {
             bytesRead = line.read(buffer, 0, buffer.size)
-            out.write(buffer, 0, bytesRead)
+            _audioFlow.tryEmit(buffer.copyOfRange(0, bytesRead))
         }
 
         line.stop()
         line.close()
         logger.info("Запись завершена.")
-        logger.info("Длина записанного аудио: ${out.size()} байт")
-
-        // Сохранение в WAV-файл
-        val audioBytes = out.toByteArray()
-        val bais = ByteArrayInputStream(audioBytes)
-        val audioInputStream = AudioInputStream(bais, format, (audioBytes.size / format.frameSize).toLong())
-
-        val wavFile = File("recorded_audio.wav")
-        AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile)
-        logger.info("Файл сохранен как ${wavFile.absolutePath}")
     }
 }
