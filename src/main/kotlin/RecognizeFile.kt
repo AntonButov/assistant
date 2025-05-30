@@ -112,7 +112,7 @@ class SpeechKitClient(
             // Настраиваем опции распознавания
             val options =
                 Salutespeech.RecognitionOptions.newBuilder()
-                    .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.MP3)
+                    .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
                     .setSampleRate(sampleRate)
                     .setChannelsCount(1)
                     .setLanguage(languageCode)

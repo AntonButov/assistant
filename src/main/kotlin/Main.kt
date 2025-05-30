@@ -41,7 +41,14 @@ fun main() {
 
     CoroutineScope(Dispatchers.IO).launch {
         speechKitClient
-            .recognizeFlow(microphoneSgaredFlow.audioFlow)
+            .recognizeFlow(
+                microphoneSgaredFlow
+                    .audioFlow
+                    .onEach {
+                        LoggerAssistant.info("Получены данные с микрофона")
+                        delay(4000)
+                    }
+            )
             .collect { result ->
                 applyResult(result, authManager)
             }
@@ -52,6 +59,7 @@ fun main() {
 
     fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {
         val logger = LoggerAssistant
+        logger.info("Результат распознавания: $result")
     when (result) {
         is RecognitionResult.Transcription -> {
             logger.info("Текст: ${result.text}")

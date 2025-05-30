@@ -35,7 +35,7 @@ class MicrophoneSharedFlow() {
 
         LoggerAssistant.info("Начало записи...")
 
-        val buffer = ByteArray(1024)
+        val buffer = ByteArray(100024)
         var bytesRead: Int
 
         val stopTime = System.currentTimeMillis() + 15000
