@@ -1,5 +1,8 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -15,100 +18,45 @@ class MicrophoneSharedFlow() {
     private val logger = LoggerAssistant
     val audioFlow: SharedFlow<ByteArray> = _audioFlow.asSharedFlow()
 
-    // Внутренние переменные для управления состоянием
-    private var microphone: TargetDataLine? = null
-    private var recordingJob: Job? = null
-    private val isRunning = AtomicBoolean(false)
+    val format = AudioFormat(16000f, 16, 1, true, true)
+    val info = DataLine.Info(TargetDataLine::class.java, format)
 
-    /**
-     * Начать запись с микрофона
-     * @return true если запись успешно начата, false в противном случае
-     */
-    fun start(): Boolean {
-        if (isRunning.getAndSet(true)) {
-            logger.info("Запись уже идет")
-            return false
-        }
+    fun run() {
+        logger.info("Начало записи...")
 
-        try {
-            LoggerAssistant.info("Настройка микрофона")
-
-            // Настраиваем формат аудио
-            val audioFormat = AudioFormat(16000f, 16, 1, true, false)
-            val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
-
-            // Проверяем поддержку микрофона
-            if (!AudioSystem.isLineSupported(targetInfo)) {
-                logger.info("Микрофон с указанным форматом не поддерживается")
-                isRunning.set(false)
-                return false
-            }
-
-            // Инициализируем микрофон
-            microphone = AudioSystem.getLine(targetInfo) as TargetDataLine
-            microphone?.open(audioFormat)
-            microphone?.start()
-
-            // Запускаем корутину для сбора аудиоданных
-         //   recordingJob = scope.launch(Dispatchers.IO) {
-                logger.info("Начало записи с микрофона")
-
-                val buffer = ByteArray(1600) // 100мс аудио при 16кГц, 16бит, моно
-                var totalBytesRead = 0
-
-                try {
-                    while (isRunning.get()) {
-                        microphone?.let { mic ->
-                            val bytesRead = mic.read(buffer, 0, buffer.size)
-                            if (bytesRead > 0) {
-                                val audioChunk = buffer.copyOfRange(0, bytesRead)
-                                _audioFlow.tryEmit( audioChunk )
-
-                                totalBytesRead += bytesRead
-                                if (totalBytesRead % 16000 == 0) { // Примерно каждую секунду
-                                    logger.info("Собрано с микрофона: ${totalBytesRead / 1024} KB")
-                                }
-                            }
-                            //delay(5) // Небольшая задержка для предотвращения перегрузки CPU
-                        } ?: break // Если микрофон null, выходим из цикла
-                    }
-                } catch (e: CancellationException) {
-                    logger.info("Корутина сбора аудио отменена")
-                    throw e
-                } catch (e: Exception) {
-                    logger.info("Ошибка при записи с микрофона: ${e.message}")
-                    isRunning.set(false)
-                }
-           // }
-
-            return true
-        } catch (e: Exception) {
-            logger.info("Ошибка при инициализации микрофона: ${e.message}")
-            stop() // Очищаем ресурсы в случае ошибки
-            return false
-        }
-    }
-
-    /**
-     * Остановить запись с микрофона
-     */
-    fun stop() {
-        if (!isRunning.getAndSet(false)) {
+        if (!AudioSystem.isLineSupported(info)) {
+            logger.info("Линия не поддерживается")
             return
         }
 
-        // Отменяем корутину
-        recordingJob?.cancel()
-        recordingJob = null
+        val line = AudioSystem.getLine(info) as TargetDataLine
+        line.open(format)
+        line.start()
 
-        // Освобождаем ресурсы микрофона
-        try {
-            microphone?.stop()
-            microphone?.close()
-            microphone = null
-            logger.info("Микрофон успешно остановлен")
-        } catch (e: Exception) {
-            logger.info("Ошибка при остановке микрофона: ${e.message}")
+        LoggerAssistant.info("Начало записи...")
+
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(1024)
+        var bytesRead: Int
+
+        val stopTime = System.currentTimeMillis() + 15000
+        while (System.currentTimeMillis() < stopTime) {
+            bytesRead = line.read(buffer, 0, buffer.size)
+            out.write(buffer, 0, bytesRead)
         }
+
+        line.stop()
+        line.close()
+        logger.info("Запись завершена.")
+        logger.info("Длина записанного аудио: ${out.size()} байт")
+
+        // Сохранение в WAV-файл
+        val audioBytes = out.toByteArray()
+        val bais = ByteArrayInputStream(audioBytes)
+        val audioInputStream = AudioInputStream(bais, format, (audioBytes.size / format.frameSize).toLong())
+
+        val wavFile = File("recorded_audio.wav")
+        AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile)
+        logger.info("Файл сохранен как ${wavFile.absolutePath}")
     }
 }
