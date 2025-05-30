@@ -105,7 +105,7 @@ fun main() {
     line.open(format)
     line.start()
 
-    println("Начало записи...")
+    LoggerAssistant.info("Начало записи...")
 
     val out = ByteArrayOutputStream()
     val buffer = ByteArray(1024)
