@@ -111,7 +111,7 @@ fun main() {
     val buffer = ByteArray(1024)
     var bytesRead: Int
 
-    val stopTime = System.currentTimeMillis() + 15000 // Запись 5 секунд
+    val stopTime = System.currentTimeMillis() + 15000
     while (System.currentTimeMillis() < stopTime) {
         bytesRead = line.read(buffer, 0, buffer.size)
         out.write(buffer, 0, bytesRead)
@@ -120,6 +120,7 @@ fun main() {
     line.stop()
     line.close()
     LoggerAssistant.info("Запись завершена.")
+    LoggerAssistant.info("Длина записанного аудио: ${out.size()} байт")
 
     // Сохранение в WAV-файл
     val audioBytes = out.toByteArray()

@@ -59,16 +59,16 @@ fun main() {
 
             // Создаем менеджер микрофона
 
-            microphoneManager.start()
-            microphoneManager
-                .audioFlow
-                .collect {
-                logger.info("Получен аудиопоток size: ${it.size}")
-                audioFileWriter.writeBytes(it)
-                audioFileWriter.finish()
+      //      microphoneManager.start()
+       //     microphoneManager
+        //        .audioFlow
+         //       .collect {
+         //       logger.info("Получен аудиопоток size: ${it.size}")
+         //       audioFileWriter.writeBytes(it)
+          //      audioFileWriter.finish()
 
                   //  AudioSystem.write
-            }
+           // }
 
             // Запускаем запись в файл
             //     val fileWriteJob = launch {
@@ -81,22 +81,22 @@ fun main() {
             //     }
 
             // Запускаем распознавание речи
-          //  val recognitionJob = launch {
-        //        SpeechKitClient(
-         //           accessKey = accessToken,
-        //            scope = scope
-         //       ).use { client ->
-                  //  microphoneManager.audioFlow
-                  //      .catch { e -> logger.info("Ошибка при обработке аудиопотока: ${e.message}") }
-                  //      .collect { audioChunk ->
+            val recognitionJob = launch {
+                SpeechKitClient(
+                    accessKey = accessToken,
+                    scope = scope
+                ).use { client ->
+                    microphoneManager.audioFlow
+                        .catch { e -> logger.info("Ошибка при обработке аудиопотока: ${e.message}") }
+                        .collect { audioChunk ->
                             // Отправляем чанки на распознавание
-                           // client.recognize(audioChunk)
-                           //     .collect { result ->
-                           //         applyResult(result, logger, authManager)
-                           //     }
-                 //       }
-              //  }
-        //    }
+                            client.recognize(audioChunk)
+                                .collect { result ->
+                                    applyResult(audioChunk, logger, authManager)
+                                }
+                        }
+                }
+            }
 
             // Запускаем микрофон
             microphoneManager.start()
