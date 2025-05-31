@@ -104,107 +104,109 @@ class SpeechKitClient(
     fun Flow<ByteArray>.bytesToArray(
         languageCode: String = "ru-RU",
         sampleRate: Int = 16000
-    ): Flow<RecognitionResult> = flatMapLatest { audioBytes ->
+    ): Flow<RecognitionResult> {
+        return flatMapLatest { audioBytes ->
 
-        logger.info("получено байт ${audioBytes.size}")
+            logger.info("получено байт ${audioBytes.size}")
 
-        callbackFlow {
-            // Настраиваем опции распознавания
-            val options =
-                Salutespeech.RecognitionOptions.newBuilder()
-                    .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
-                    .setSampleRate(sampleRate)
-                    .setChannelsCount(1)
-                    .setLanguage(languageCode)
-                    // Включаем поддержку множественных высказываний
-                    .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
-                    // Настраиваем распознавание длинных высказываний
-                    .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
-                    .build()
+            callbackFlow {
+                // Настраиваем опции распознавания
+                val options =
+                    Salutespeech.RecognitionOptions.newBuilder()
+                        .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
+                        .setSampleRate(sampleRate)
+                        .setChannelsCount(1)
+                        .setLanguage(languageCode)
+                        // Включаем поддержку множественных высказываний
+                        .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                        // Настраиваем распознавание длинных высказываний
+                        .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                        .build()
 
-            // Создаем запрос с опциями
-            val optionsRequest =
-                Salutespeech.RecognitionRequest.newBuilder()
-                    .setOptions(options)
-                    .build()
+                // Создаем запрос с опциями
+                val optionsRequest =
+                    Salutespeech.RecognitionRequest.newBuilder()
+                        .setOptions(options)
+                        .build()
 
-            // Создаем запрос с аудиоданными
-            val audioChunkRequest =
-                Salutespeech.RecognitionRequest.newBuilder()
-                    .setAudioChunk(ByteString.copyFrom(audioBytes))
-                    .build()
+                // Создаем запрос с аудиоданными
+                val audioChunkRequest =
+                    Salutespeech.RecognitionRequest.newBuilder()
+                        .setAudioChunk(ByteString.copyFrom(audioBytes))
+                        .build()
 
-            logger.info("Отправка запроса на распознавание...")
+                logger.info("Отправка запроса на распознавание...")
 
-            // Создаем обработчик ответов
-            val streamObserver =
-                object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
-                    override fun onNext(response: Salutespeech.RecognitionResponse) {
-                        when {
-                            response.hasTranscription() -> {
-                                val transcription = response.transcription
-                                val isEou = transcription.eou
+                // Создаем обработчик ответов
+                val streamObserver =
+                    object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
+                        override fun onNext(response: Salutespeech.RecognitionResponse) {
+                            when {
+                                response.hasTranscription() -> {
+                                    val transcription = response.transcription
+                                    val isEou = transcription.eou
 
-                                val resultText =
-                                    transcription.resultsList.joinToString(" ") { result ->
-                                        result.normalizedText.ifEmpty { result.text }
+                                    val resultText =
+                                        transcription.resultsList.joinToString(" ") { result ->
+                                            result.normalizedText.ifEmpty { result.text }
+                                        }
+
+                                    if (resultText.isNotEmpty()) {
+                                        trySend(RecognitionResult.Transcription(resultText, isEou))
+                                        //logger.info("Распознано: $resultText (финальный: $isEou)")
                                     }
+                                }
 
-                                if (resultText.isNotEmpty()) {
-                                    trySend(RecognitionResult.Transcription(resultText, isEou))
-                                    //logger.info("Распознано: $resultText (финальный: $isEou)")
+                                response.hasBackendInfo() -> {
+                                    val backendInfo = response.backendInfo
+                                    trySend(
+                                        RecognitionResult.BackendInfo(
+                                            modelName = backendInfo.modelName,
+                                            modelVersion = backendInfo.modelVersion,
+                                        ),
+                                    )
+                                }
+
+                                response.hasInsight() -> {
+                                    trySend(RecognitionResult.Insight(response.insight.insightResult))
+                                    logger.info("Получен insight: ${response.insight.insightResult}")
+                                }
+
+                                response.hasVad() -> {
+                                    val vadInfo = response.vad
+                                    trySend(RecognitionResult.VadInfo(true)) // vadInfo.hasVoice
+                                    // logger.info("Получен VAD результат: ") // ${vadInfo.hasVoice}")
                                 }
                             }
+                        }
 
-                            response.hasBackendInfo() -> {
-                                val backendInfo = response.backendInfo
-                                trySend(
-                                    RecognitionResult.BackendInfo(
-                                        modelName = backendInfo.modelName,
-                                        modelVersion = backendInfo.modelVersion,
-                                    ),
-                                )
-                            }
+                        override fun onError(t: Throwable) {
+                            logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
+                            trySend(RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t))
+                            close(t)
+                        }
 
-                            response.hasInsight() -> {
-                                trySend(RecognitionResult.Insight(response.insight.insightResult))
-                                logger.info("Получен insight: ${response.insight.insightResult}")
-                            }
-
-                            response.hasVad() -> {
-                                val vadInfo = response.vad
-                                trySend(RecognitionResult.VadInfo(true)) // vadInfo.hasVoice
-                                // logger.info("Получен VAD результат: ") // ${vadInfo.hasVoice}")
-                            }
+                        override fun onCompleted() {
+                            // logger.info("Распознавание завершено успешно")
+                            close()
                         }
                     }
 
-                    override fun onError(t: Throwable) {
-                        logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                        trySend(RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t))
-                        close(t)
-                    }
+                // Получаем requestObserver для отправки запросов
+                val requestObserver = stub.recognize(streamObserver)
 
-                    override fun onCompleted() {
-                        // logger.info("Распознавание завершено успешно")
-                        close()
-                    }
+                // logger.info("Отправка настроек распознавания...")
+                requestObserver.onNext(optionsRequest)
+
+                // logger.info("Отправка аудиоданных (${audioBytes.size} байт)...")
+                requestObserver.onNext(audioChunkRequest)
+
+                // logger.info("Сигнализация о завершении запроса...")
+                requestObserver.onCompleted()
+
+                awaitClose {
+                    //  logger.info("Закрытие клиента распознавания речи")
                 }
-
-            // Получаем requestObserver для отправки запросов
-            val requestObserver = stub.recognize(streamObserver)
-
-            // logger.info("Отправка настроек распознавания...")
-            requestObserver.onNext(optionsRequest)
-
-            // logger.info("Отправка аудиоданных (${audioBytes.size} байт)...")
-            requestObserver.onNext(audioChunkRequest)
-
-            // logger.info("Сигнализация о завершении запроса...")
-            requestObserver.onCompleted()
-
-            awaitClose {
-                //  logger.info("Закрытие клиента распознавания речи")
             }
         }
     }
