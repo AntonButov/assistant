@@ -1,6 +1,7 @@
 import LoggerAssistant
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -8,6 +9,9 @@ import java.util.logging.Logger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import javax.sound.sampled.AudioFileFormat
+import javax.sound.sampled.AudioFormat
+import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.spi.AudioFileWriter
 
@@ -46,7 +50,7 @@ fun main() {
                     .audioFlow
                     .onEach {
                         LoggerAssistant.info("Получены данные с микрофона")
-                        delay(4000)
+                        //delay(4000)
                     }
             )
             .collect { result ->
