@@ -21,14 +21,25 @@ class SpeechKitAuth(
     private val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
     private var accessToken: String? = null
     private var tokenExpirationTime: Long = 0
+
     // Создаем HTTP клиент с отключенной проверкой SSL
     private val httpClient: HttpClient = HttpClient(CIO) {
         // Отключаем проверку SSL для dev/test окружений
         engine {
             https {
                 trustManager = object : javax.net.ssl.X509TrustManager {
-                    override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
-                    override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>, authType: String) {}
+                    override fun checkClientTrusted(
+                        chain: Array<java.security.cert.X509Certificate>,
+                        authType: String
+                    ) {
+                    }
+
+                    override fun checkServerTrusted(
+                        chain: Array<java.security.cert.X509Certificate>,
+                        authType: String
+                    ) {
+                    }
+
                     override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
                 }
             }
@@ -54,11 +65,7 @@ class SpeechKitAuth(
         }
     }
 
-    /**
-     * Получает действующий токен доступа, при необходимости обновляя его
-     */
-    @Synchronized
-    fun getAccessToken(): String {
+    suspend fun getAccessToken(): String {
         val currentTime = System.currentTimeMillis()
         if (accessToken == null || currentTime >= tokenExpirationTime) {
             refreshAccessToken()
@@ -69,33 +76,30 @@ class SpeechKitAuth(
     /**
      * Принудительно обновляет токен доступа
      */
-    @Synchronized
-    fun refreshAccessToken() {
-       // logger.info("Запрос нового токена доступа...")
+    suspend fun refreshAccessToken() {
+        // logger.info("Запрос нового токена доступа...")
 
         try {
             val rquid = UUID.randomUUID().toString()
 
-            val response = runBlocking {
-                httpClient.submitForm(
-                    url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-                    formParameters = Parameters.build {
-                        append("scope", scope)
-                    }
-                ) {
-                    headers {
-                        append(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
-                        append(HttpHeaders.Accept, ContentType.Application.Json.toString())
-                        append("RqUID", rquid)
-                        append(HttpHeaders.Authorization, "Basic $authorizationKey")
-                    }
-                }.body<OAuthResponse>()
-            }
+            val response = httpClient.submitForm(
+                url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+                formParameters = Parameters.build {
+                    append("scope", scope)
+                }
+            ) {
+                headers {
+                    append(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded.toString())
+                    append(HttpHeaders.Accept, ContentType.Application.Json.toString())
+                    append("RqUID", rquid)
+                    append(HttpHeaders.Authorization, "Basic $authorizationKey")
+                }
+            }.body<OAuthResponse>()
 
-            accessToken = response.access_token
+        accessToken = response.access_token
 
-            // Устанавливаем время истечения срока действия токена с запасом в 5 минут
-            tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
+        // Устанавливаем время истечения срока действия токена с запасом в 5 минут
+        tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
 
            // logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
         } catch (e: Exception) {

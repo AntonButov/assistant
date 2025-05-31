@@ -10,7 +10,9 @@ fun main() {
     val scope = "SALUTE_SPEECH_PERS"
 
     val authManager = SpeechKitAuth(authorizationKey, scope)
-    val accessToken = authManager.getAccessToken()
+    val accessToken = runBlocking {
+        authManager.getAccessToken()
+    }
 
     val recognizer = Recognizer(accessToken)
 
@@ -38,7 +40,7 @@ fun main() {
     }
 }
 
-    fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {
+    suspend fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {
         val logger = LoggerAssistant
         logger.info("Результат распознавания: $result")
     when (result) {
