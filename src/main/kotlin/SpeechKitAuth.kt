@@ -15,9 +15,12 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 class SpeechKitAuth(
-    private val authorizationKey: String, // Base64 encoded credentials
-    private val scope: String = "SALUTE_SPEECH_PERS"
 ) {
+    // Создаем Basic Auth ключ
+    val authorizationKey = // todo local.properties
+        "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
+    val scope = "SALUTE_SPEECH_PERS"
+
     private val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
     private var accessToken: String? = null
     private var tokenExpirationTime: Long = 0

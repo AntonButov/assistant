@@ -4,12 +4,7 @@ import tech.antonbutov.api.models.RecognitionResult
 
 fun main() {
 
-    // Создаем Basic Auth ключ
-    val authorizationKey =
-        "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
-    val scope = "SALUTE_SPEECH_PERS"
-
-    val authManager = SpeechKitAuth(authorizationKey, scope)
+    val authManager = SpeechKitAuth()
     val accessToken = runBlocking {
         authManager.getAccessToken()
     }
