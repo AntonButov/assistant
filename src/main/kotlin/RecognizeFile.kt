@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -139,7 +140,7 @@ class SpeechKitClient(
 
                 // Создаем обработчик ответов
                 val streamObserver =
-                    object : io.grpc.stub.StreamObserver<Salutespeech.RecognitionResponse> {
+                    object : StreamObserver<Salutespeech.RecognitionResponse> {
                         override fun onNext(response: Salutespeech.RecognitionResponse) {
                             when {
                                 response.hasTranscription() -> {
