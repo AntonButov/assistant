@@ -12,47 +12,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.flatMapLatest
+import tech.antonbutov.api.models.RecognitionResult
 import java.io.Closeable
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
-
-/**
- * Sealed класс для различных типов результатов распознавания речи
- */
-sealed class RecognitionResult {
-    /**
-     * Промежуточный или финальный результат распознавания текста
-     */
-    data class Transcription(
-        val text: String,
-        val isFinal: Boolean,
-    ) : RecognitionResult()
-
-    /**
-     * Информация о модели распознавания речи
-     */
-    data class BackendInfo(
-        val modelName: String,
-        val modelVersion: String,
-    ) : RecognitionResult()
-
-    /**
-     * Дополнительные метаданные о распознавании
-     */
-    data class Insight(val data: String) : RecognitionResult()
-
-    /**
-     * Информация о голосовой активности
-     */
-    data class VadInfo(val hasVoice: Boolean) : RecognitionResult()
-
-    /**
-     * Сообщение об ошибке
-     */
-    data class Error(val message: String, val cause: Throwable? = null) : RecognitionResult()
-}
 
 class Recognizer(
     accessKey: String,

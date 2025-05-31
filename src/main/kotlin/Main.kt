@@ -1,5 +1,6 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import tech.antonbutov.api.models.Transcription
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
@@ -60,7 +61,7 @@ fun main() {
         val logger = LoggerAssistant
         logger.info("Результат распознавания: $result")
     when (result) {
-        is RecognitionResult.Transcription -> {
+        is Transcription -> {
             logger.info("Текст: ${result.text}")
             if (result.isFinal) logger.info("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: ${result.text}")
         }
