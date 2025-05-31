@@ -36,26 +36,31 @@ class MicrophoneSharedFlow() {
         LoggerAssistant.info("Начало записи...")
 
         val buffer = ByteArray(200024)
+
+        val totalBytes = ByteArrayOutputStream()
+
         var bytesRead: Int
 
         val stopTime = System.currentTimeMillis()
         //while (System.currentTimeMillis() < stopTime) {
             bytesRead = line.read(buffer, 0, buffer.size)
+            totalBytes.write(buffer, 0, bytesRead)
         //}
 
         line.stop()
         line.close()
 
-        val out = ByteArrayOutputStream()
-        out.write(buffer, 0, bytesRead)
-        val audioFile = File("recorded_audio.wav")
+        val wavOutputStream = ByteArrayOutputStream()
         AudioSystem.write(
-            AudioInputStream(ByteArrayInputStream(out.toByteArray()), format, out.size().toLong()),
-            AudioFileFormat.Type.WAVE, audioFile
+            AudioInputStream(
+                ByteArrayInputStream(totalBytes.toByteArray()),
+                format,
+                totalBytes.size().toLong() / format.frameSize
+            ),
+            AudioFileFormat.Type.WAVE,
+            wavOutputStream
         )
-
-        val audioBytes = audioFile.readBytes()
-        _audioFlow.tryEmit(audioBytes)
+        _audioFlow.tryEmit(wavOutputStream.toByteArray())
 
         logger.info("Запись завершена.")
     }
