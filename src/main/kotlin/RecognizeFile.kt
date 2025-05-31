@@ -54,12 +54,12 @@ sealed class RecognitionResult {
     data class Error(val message: String, val cause: Throwable? = null) : RecognitionResult()
 }
 
-class SpeechKitClient(
+class Recognizer(
     accessKey: String,
     scope: String = "SALUTE_SPEECH_PERS",
 ) : Closeable {
 
-    private val logger = Logger.getLogger(SpeechKitClient::class.java.name)
+    private val logger = Logger.getLogger(Recognizer::class.java.name)
     private val channel = NettyChannelBuilder.forTarget("smartspeech.sber.ru")
         .useTransportSecurity()
         .sslContext(
