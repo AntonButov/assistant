@@ -60,6 +60,34 @@ class RecognizerNew(
     private val optionsRequest = createOptions()
 
     private val streamObserver by lazy {
+        createStreamObserver()
+    }
+
+    private val requestObserver by lazy {
+        stub.recognize(streamObserver).also {
+            it.onNext(optionsRequest)
+        }
+    }
+
+    init {
+        coroutineScope.launch {
+            sourceFlow
+                .onEach {
+                    requestObserver.onNext(it.toChunk())
+                }
+                .onCompletion {
+                    requestObserver.onCompleted() // TODO нужно подумать перезапускать
+                }
+                .collect()
+        }
+    }
+
+    override fun close() {
+        logger.info("Закрытие клиента распознавания речи")
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+    }
+
+    private fun createStreamObserver() =
         object : StreamObserver<Salutespeech.RecognitionResponse> {
             override fun onNext(response: Salutespeech.RecognitionResponse) {
                 when {
@@ -118,66 +146,6 @@ class RecognizerNew(
                 // close()
             }
         }
-    }
-
-    private val requestObserver by lazy {
-        stub.recognize(streamObserver).also {
-            it.onNext(optionsRequest)
-        }
-    }
-
-    init {
-        coroutineScope.launch {
-            sourceFlow
-                .onEach {
-                    requestObserver.onNext(it.toChunk())
-                }
-                .onCompletion {
-                    requestObserver.onCompleted() // TODO нужно подумать перезапускать
-                }
-                .collect()
-        }
-    }
-
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun Flow<ByteArray>.bytesToArray(
-        languageCode: String = "ru-RU",
-        sampleRate: Int = 16000
-    ): Flow<RecognitionResult> {
-        return flatMapLatest { audioBytes ->
-
-            logger.info("получено байт ${audioBytes.size}")
-
-            callbackFlow {
-
-                logger.info("Отправка запроса на распознавание...")
-
-                // Создаем обработчик ответо
-
-                // Получаем requestObserver для отправки запросов
-                val requestObserver = stub.recognize(streamObserver)
-
-                // logger.info("Отправка настроек распознавания...")
-                requestObserver.onNext(optionsRequest)
-
-                // logger.info("Отправка аудиоданных (${audioBytes.size} байт)...")
-                requestObserver.onNext(audioBytes.toChunk())
-
-                // logger.info("Сигнализация о завершении запроса...")
-                requestObserver.onCompleted()
-
-                awaitClose {
-                    //  logger.info("Закрытие клиента распознавания речи")
-                }
-            }
-        }
-    }
-
-    override fun close() {
-        logger.info("Закрытие клиента распознавания речи")
-        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
-    }
 
     private fun createOptions(): Salutespeech.RecognitionRequest {
         val options =
