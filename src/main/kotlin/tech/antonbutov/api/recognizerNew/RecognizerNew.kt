@@ -5,28 +5,20 @@ import TODO.SmartSpeechGrpc
 import io.grpc.Metadata
 import io.grpc.stub.MetadataUtils
 import com.google.protobuf.ByteString
-import com.google.rpc.context.AttributeContext
-import fileFlow
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tech.antonbutov.api.models.RecognitionResult
 import java.io.Closeable
-import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -37,8 +29,8 @@ class RecognizerNew(
     private val coroutineScope: CoroutineScope,
 ) : Closeable {
 
-    private val _recognosedFlow: MutableStateFlow<RecognitionResult> = MutableStateFlow(RecognitionResult.Transcription("Strart", false))
-    val recognizedFlow: Flow<RecognitionResult> = _recognosedFlow
+    private val _recognisedFlow: MutableStateFlow<RecognitionResult> = MutableStateFlow(RecognitionResult.Transcription("Strart", false))
+    val recognizedFlow: Flow<RecognitionResult> = _recognisedFlow
     private val scope: String = "SALUTE_SPEECH_PERS"
 
     private val languageCode = "ru-RU"
@@ -101,7 +93,7 @@ class RecognizerNew(
                             }
 
                         if (resultText.isNotEmpty()) {
-                            _recognosedFlow.update {
+                            _recognisedFlow.update {
                                 RecognitionResult.Transcription(resultText, isEou)
                             }
                             //logger.info("Распознано: $resultText (финальный: $isEou)")
@@ -110,7 +102,7 @@ class RecognizerNew(
 
                     response.hasBackendInfo() -> {
                         val backendInfo = response.backendInfo
-                        _recognosedFlow.update {
+                        _recognisedFlow.update {
                             RecognitionResult.BackendInfo(
                                 modelName = backendInfo.modelName,
                                 modelVersion = backendInfo.modelVersion,
@@ -119,14 +111,14 @@ class RecognizerNew(
                     }
 
                     response.hasInsight() -> {
-                        _recognosedFlow.update {
+                        _recognisedFlow.update {
                             RecognitionResult.Insight(response.insight.insightResult)
                         }
                         logger.info("Получен insight: ${response.insight.insightResult}")
                     }
 
                     response.hasVad() -> {
-                        _recognosedFlow.update {
+                        _recognisedFlow.update {
                             RecognitionResult.VadInfo(true)
                         }
                     }
@@ -135,7 +127,7 @@ class RecognizerNew(
 
             override fun onError(t: Throwable) {
                 logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                _recognosedFlow.update {
+                _recognisedFlow.update {
                     RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
                 }
                 // close(t)
