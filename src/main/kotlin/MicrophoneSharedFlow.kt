@@ -37,7 +37,7 @@ class MicrophoneSharedFlow() {
 
         val stopTime = System.currentTimeMillis() + 15000
         while (System.currentTimeMillis() < stopTime) {
-            val buffer = ByteArray(50024)
+            val buffer = ByteArray(10024)
             val bytesRead = line.read(buffer, 0, buffer.size)
             val totalBytes = ByteArrayOutputStream()
             totalBytes.write(buffer, 0, bytesRead)
