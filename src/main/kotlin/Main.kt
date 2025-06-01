@@ -21,7 +21,7 @@ fun main() {
 
     val recogniser = Recognizer(accessKey = accessToken)
 
-    CoroutineScope(Dispatchers.IO).launch {
+    scope.launch {
         recognizerNew
             .recognizedFlow
             .collect { result ->

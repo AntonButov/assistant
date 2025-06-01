@@ -54,12 +54,12 @@ class RecognizerNew(
         )
         .build()
 
-    private val stub = createStub()
+    private val stub by lazy { createStub() }
 
     // Настраиваем опции распознавания
     private val optionsRequest = createOptions()
 
-    private val streamObserver =
+    private val streamObserver by lazy {
         object : StreamObserver<Salutespeech.RecognitionResponse> {
             override fun onNext(response: Salutespeech.RecognitionResponse) {
                 when {
@@ -110,27 +110,24 @@ class RecognizerNew(
                 _recognosedFlow.update {
                     RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
                 }
-               // close(t)
+                // close(t)
             }
 
             override fun onCompleted() {
                 logger.info("Распознавание завершено успешно")
-               // close()
+                // close()
             }
         }
+    }
 
-    private val requestObserver = stub.recognize(streamObserver)
+    private val requestObserver by lazy { stub.recognize(streamObserver) }
 
     init {
         coroutineScope.launch {
             sourceFlow
-                .onStart {
-                    requestObserver.onNext(optionsRequest)
-                }
                 .onEach {
+                    requestObserver.onNext(optionsRequest)
                     requestObserver.onNext(it.toChunk())
-                }
-                .onCompletion {
                     requestObserver.onCompleted()
                 }
                 .collect()
