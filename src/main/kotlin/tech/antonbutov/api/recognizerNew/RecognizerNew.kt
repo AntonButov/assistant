@@ -68,7 +68,6 @@ class RecognizerNew(
                     requestObserver.onNext(it.toChunk())
                 }
                 .onCompletion {
-                    requestObserver.onCompleted()
                     close()
                 }
                 .collect()

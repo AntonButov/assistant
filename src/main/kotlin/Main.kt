@@ -33,7 +33,8 @@ fun main() {
         delay(2000)
     }
 
-    recognizerNew.close()
+    scope.cancel()
+    //recognizerNew.close()
 }
 
     suspend fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {
