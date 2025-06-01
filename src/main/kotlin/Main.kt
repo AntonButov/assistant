@@ -19,22 +19,12 @@ fun main() {
         coroutineScope = scope
     )
 
-    val recogniser = Recognizer(accessKey = accessToken)
-
     scope.launch {
         recognizerNew
             .recognizedFlow
             .collect { result ->
                 applyResult(result, authManager)
             }
-     //     recogniser
-     //         .recognizeFlow(
-     //             microphoneSgaredFlow
-     //                 .audioFlow
-     //         )
-     //         .collect { result ->
-     //           applyResult(result, authManager)
-     //       }
     }
 
     microphoneSgaredFlow.run()
