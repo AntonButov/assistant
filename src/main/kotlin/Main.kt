@@ -1,6 +1,6 @@
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
 import tech.antonbutov.api.models.RecognitionResult
+import tech.antonbutov.api.recognizerNew.RecognizerNew
 
 fun main() {
 
@@ -9,23 +9,32 @@ fun main() {
         authManager.getAccessToken()
     }
 
-    val recognizer = Recognizer(accessToken)
+    val scope = CoroutineScope(Dispatchers.IO)
 
     val microphoneSgaredFlow = MicrophoneSharedFlow()
 
+    val recognizerNew = RecognizerNew(
+        accessKey = accessToken,
+        sourceFlow = microphoneSgaredFlow.audioFlow,
+        coroutineScope = scope
+    )
+
+    val recogniser = Recognizer(accessKey = accessToken)
+
     CoroutineScope(Dispatchers.IO).launch {
-        recognizer
-            .recognizeFlow(
-                microphoneSgaredFlow
-                    .audioFlow
-                    .onEach {
-                        LoggerAssistant.info("Получены данные с микрофона")
-                        //delay(4000)
-                    }
-            )
+        recognizerNew
+            .recognizedFlow
             .collect { result ->
                 applyResult(result, authManager)
             }
+     //     recogniser
+     //         .recognizeFlow(
+     //             microphoneSgaredFlow
+     //                 .audioFlow
+     //         )
+     //         .collect { result ->
+     //           applyResult(result, authManager)
+     //       }
     }
 
     microphoneSgaredFlow.run()
