@@ -120,15 +120,20 @@ class RecognizerNew(
         }
     }
 
-    private val requestObserver by lazy { stub.recognize(streamObserver) }
+    private val requestObserver by lazy {
+        stub.recognize(streamObserver).also {
+            it.onNext(optionsRequest)
+        }
+    }
 
     init {
         coroutineScope.launch {
             sourceFlow
                 .onEach {
-                    requestObserver.onNext(optionsRequest)
                     requestObserver.onNext(it.toChunk())
-                    requestObserver.onCompleted()
+                }
+                .onCompletion {
+                    requestObserver.onCompleted() // TODO нужно подумать перезапускать
                 }
                 .collect()
         }
