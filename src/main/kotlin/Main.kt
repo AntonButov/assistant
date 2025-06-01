@@ -30,8 +30,10 @@ fun main() {
     microphoneSgaredFlow.run()
 
     runBlocking {
-        delay(20000)
+        delay(2000)
     }
+
+    recognizerNew.close()
 }
 
     suspend fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {

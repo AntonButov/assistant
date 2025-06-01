@@ -68,15 +68,17 @@ class RecognizerNew(
                     requestObserver.onNext(it.toChunk())
                 }
                 .onCompletion {
-                    requestObserver.onCompleted() // TODO нужно подумать перезапускать
+                    requestObserver.onCompleted()
+                    close()
                 }
                 .collect()
         }
     }
 
     override fun close() {
+        requestObserver.onCompleted()
         logger.info("Закрытие клиента распознавания речи")
-        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+        channel.shutdown()
     }
 
     private fun createStreamObserver() =
@@ -85,7 +87,7 @@ class RecognizerNew(
                 when {
                     response.hasTranscription() -> {
                         val transcription = response.transcription
-                        val isEou = transcription.eou
+                        val isFinal = transcription.eou
 
                         val resultText =
                             transcription.resultsList.joinToString(" ") { result ->
@@ -94,7 +96,10 @@ class RecognizerNew(
 
                         if (resultText.isNotEmpty()) {
                             _recognisedFlow.update {
-                                RecognitionResult.Transcription(resultText, isEou)
+                                RecognitionResult.Transcription(resultText, isFinal)
+                            }
+                            if (isFinal) {
+                                restartObserver()
                             }
                             //logger.info("Распознано: $resultText (финальный: $isEou)")
                         }
@@ -139,6 +144,10 @@ class RecognizerNew(
             }
         }
 
+    private fun restartObserver() {
+       //
+    }
+
     private fun createOptions(): Salutespeech.RecognitionRequest {
         val options =
             Salutespeech.RecognitionOptions.newBuilder()
@@ -168,7 +177,7 @@ class RecognizerNew(
             // Создаем стаб с установленными заголовками
             return SmartSpeechGrpc.newStub(channel)
                 .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
-                .withDeadlineAfter(30, TimeUnit.SECONDS)
+             ///   .withDeadlineAfter(30, TimeUnit.SECONDS)
     }
 }
 
