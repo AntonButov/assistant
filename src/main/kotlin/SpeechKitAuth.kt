@@ -16,8 +16,7 @@ import java.util.logging.Logger
 class SpeechKitAuth(
 ) {
     // Создаем Basic Auth ключ
-    val authorizationKey = // todo local.properties
-        "ODkwNzBmOTYtZmI5MS00YjU5LTgzZWQtZDNkZTEyOTI1MWE2OmYyZThlOTU4LTQ5Y2QtNDczYi04Y2EyLTJiNmY4NmIzYTk4OA=="
+    val authorizationKey = PropertyLoader.getProperty("speechkit.authorization.key")
     val scope = "SALUTE_SPEECH_PERS"
 
     private val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
