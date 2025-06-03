@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ktorfit)
-    kotlin("plugin.serialization") version libs.versions.kotlin
+    alias(libs.plugins.serialization)
     application
 }
 
@@ -107,9 +107,9 @@ ktlint {
 }
 
 // Привязка ktlintFormat к задачам test, build и run
-tasks.matching { it.name == "test" || it.name == "build" || it.name == "run" }.configureEach {
-    dependsOn("ktlintFormat")
-}
+tasks.named("test").configure { dependsOn("ktlintFormat") }
+tasks.named("build").configure { dependsOn("ktlintFormat") }
+tasks.named("run").configure { dependsOn("ktlintFormat") }
 
 application {
     mainClass.set("RecognizeFileKt")

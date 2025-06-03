@@ -15,7 +15,6 @@ import java.util.logging.Logger
 
 class SpeechKitAuth(
 ) {
-    // Создаем Basic Auth ключ
     val authorizationKey = PropertyLoader.getProperty("speechkit.authorization.key")
     val scope = "SALUTE_SPEECH_PERS"
 
@@ -46,7 +45,6 @@ class SpeechKitAuth(
             }
         }
 
-        // Добавляем поддержку JSON
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
@@ -55,7 +53,6 @@ class SpeechKitAuth(
             })
         }
 
-        // Добавляем логирование
         install(Logging) {
             logger = object : io.ktor.client.plugins.logging.Logger {
                 override fun log(message: String) {
@@ -74,11 +71,7 @@ class SpeechKitAuth(
         return accessToken ?: throw IllegalStateException("Не удалось получить токен доступа")
     }
 
-    /**
-     * Принудительно обновляет токен доступа
-     */
     suspend fun refreshAccessToken() {
-        // logger.info("Запрос нового токена доступа...")
 
         try {
             val rquid = UUID.randomUUID().toString()
