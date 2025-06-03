@@ -1,8 +1,8 @@
 plugins {
-    kotlin("jvm") version libs.versions.kotlin
-    id("com.google.protobuf") version "0.9.3"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
-    id("de.jensklingenberg.ktorfit") version "1.10.2"
+    alias(libs.plugins.ktorfit)
     kotlin("plugin.serialization") version libs.versions.kotlin
     application
 }
@@ -16,75 +16,56 @@ repositories {
     google()
 }
 
-val grpcVersion = "1.58.0"
-val grpcKotlinVersion = "1.3.0"
-val protobufVersion = "3.24.0"
-val ktorfitVersion = "1.10.2"
-val ktorVersion = "2.3.7"
-val coroutinesVersion = "1.7.3" // Обновлено для лучшей поддержки SharedFlow
-
 dependencies {
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$coroutinesVersion")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.jdk8)
 
     // gRPC
-    implementation("io.grpc:grpc-netty-shaded:$grpcVersion")
-    implementation("io.grpc:grpc-protobuf:$grpcVersion")
-    implementation("io.grpc:grpc-stub:$grpcVersion")
-    implementation("io.grpc:grpc-core:$grpcVersion")
-    implementation("io.grpc:grpc-api:$grpcVersion")
-    implementation("io.grpc:grpc-kotlin-stub:$grpcKotlinVersion")
+    implementation(libs.grpc.netty.shaded)
+    implementation(libs.grpc.protobuf)
+    implementation(libs.grpc.stub)
+    implementation(libs.grpc.core)
+    implementation(libs.grpc.api)
+    implementation(libs.grpc.kotlin.stub)
 
     // Protobuf
-    implementation("com.google.protobuf:protobuf-java:$protobufVersion")
-    implementation("com.google.protobuf:protobuf-kotlin:$protobufVersion")
+    implementation(libs.protobuf.java)
+    implementation(libs.protobuf.kotlin)
 
     // Ktor & Ktorfit
-    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:$ktorfitVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-    implementation("io.ktor:ktor-client-logging:$ktorVersion")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation(libs.ktorfit.lib)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.kotlinx.serialization.json)
 
     // Logging
-    implementation("org.slf4j:slf4j-api:2.0.9")
-    implementation("ch.qos.logback:logback-classic:1.4.11")
+    implementation(libs.slf4j.api)
+    implementation(libs.logback.classic)
 
     // Kotlin
-    implementation(kotlin("stdlib-jdk8"))
-    implementation(kotlin("reflect"))
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlin.reflect)
 }
 
 // Настройка Ktorfit
 ktorfit {
-    version = ktorfitVersion
-}
-
-// Остальная часть файла остается без изменений
-// ...
-
-application {
-    mainClass.set("MainKt")
-}
-
-// Настройка Ktorfit
-ktorfit {
-    version = ktorfitVersion
+    version = libs.versions.ktorfit.get()
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:$protobufVersion"
+        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
     }
     plugins {
         create("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:$grpcVersion"
+            artifact = "io.grpc:protoc-gen-grpc-java:${libs.versions.grpc.get()}"
         }
         create("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:$grpcKotlinVersion:jdk8@jar"
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:${libs.versions.grpcKotlin.get()}:jdk8@jar"
         }
     }
     generateProtoTasks {
@@ -136,8 +117,4 @@ application {
 
 ktlint {
     ktLintConfig()
-}
-
-application {
-    mainClass.set("RecognizeFileKt")
 }
