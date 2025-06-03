@@ -48,7 +48,6 @@ class RecognizerNew(
 
     private val stub by lazy { createStub() }
 
-    // Настраиваем опции распознавания
     private val optionsRequest = createOptions()
 
     private val streamObserver by lazy {

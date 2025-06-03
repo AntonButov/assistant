@@ -23,7 +23,7 @@ fun main() {
         recognizerNew
             .recognizedFlow
             .collect { result ->
-                applyResult(result, authManager)
+                applyResult(result)
             }
     }
 
@@ -34,10 +34,9 @@ fun main() {
     }
 
     scope.cancel()
-    //recognizerNew.close()
 }
 
-    suspend fun applyResult(result: RecognitionResult, authManager: SpeechKitAuth, ) {
+    fun applyResult(result: RecognitionResult) {
         val logger = LoggerAssistant
         logger.info("Результат распознавания: $result")
     when (result) {
@@ -60,7 +59,7 @@ fun main() {
             logger.info("Ошибка: ${result.message}")
             if (result.message.contains("UNAUTHENTICATED")) {
                 logger.info("Токен устарел, получаем новый...")
-                authManager.refreshAccessToken()
+               //authManager.refreshAccessToken()
             }
         }
     }
