@@ -1,10 +1,10 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.compose)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ktorfit)
     alias(libs.plugins.serialization)
-    application
 }
 
 group = "tech.antonbutov"
@@ -12,14 +12,22 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    gradlePluginPortal()
     google()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
 }
 
 dependencies {
+    // Compose - важно добавить runtime явно
+    implementation(libs.compose.runtime)
+    implementation(libs.compose.foundation)
+    implementation(libs.compose.material)
+    implementation(libs.compose.ui)
+    implementation(libs.compose.desktop)
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.jdk8)
+    implementation(libs.kotlinx.coroutines.swing)
 
     // gRPC
     implementation(libs.grpc.netty.shaded)
@@ -53,9 +61,10 @@ dependencies {
 
 // Настройка Ktorfit
 ktorfit {
-    version = libs.versions.ktorfit.get()
+    version = "1.10.2"
 }
 
+// Протобаф конфигурация
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
@@ -78,6 +87,12 @@ protobuf {
                 create("kotlin")
             }
         }
+    }
+}
+
+compose.desktop {
+    application {
+        mainClass = "MainKt"
     }
 }
 
@@ -109,11 +124,7 @@ ktlint {
 // Привязка ktlintFormat к задачам test, build и run
 tasks.named("test").configure { dependsOn("ktlintFormat") }
 tasks.named("build").configure { dependsOn("ktlintFormat") }
-tasks.named("run").configure { dependsOn("ktlintFormat") }
-
-application {
-    mainClass.set("RecognizeFileKt")
-}
+//tasks.named("run").configure { dependsOn("ktlintFormat") }
 
 ktlint {
     ktLintConfig()
