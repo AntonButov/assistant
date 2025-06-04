@@ -1,5 +1,6 @@
 package tech.antonbutov.api.recognizerNew
 
+import SpeechKitAuth
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
 import io.grpc.Metadata
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tech.antonbutov.api.models.RecognitionResult
@@ -24,11 +26,12 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 class RecognizerNew(
-    private val accessKey: String,
+    private val speechKitAuth: SpeechKitAuth = SpeechKitAuth(),
     private val sourceFlow: Flow<ByteArray>,
     private val coroutineScope: CoroutineScope,
 ) : Closeable {
 
+    private lateinit var accessKey: String
     private val _recognisedFlow: MutableStateFlow<RecognitionResult> = MutableStateFlow(RecognitionResult.Transcription("Strart", false))
     val recognizedFlow: Flow<RecognitionResult> = _recognisedFlow
     private val scope: String = "SALUTE_SPEECH_PERS"
@@ -63,6 +66,9 @@ class RecognizerNew(
     init {
         coroutineScope.launch {
             sourceFlow
+                .onStart {
+                    accessKey = speechKitAuth.getAccessToken()
+                }
                 .onEach {
                     requestObserver.onNext(it.toChunk())
                 }

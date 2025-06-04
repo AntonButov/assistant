@@ -1,21 +1,26 @@
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
 import tech.antonbutov.api.models.RecognitionResult
 import tech.antonbutov.api.recognizerNew.RecognizerNew
 
-fun main() {
-
-    val authManager = SpeechKitAuth()
-    val accessToken = runBlocking {
-        authManager.getAccessToken()
-    }
-
+fun main() = application {
     val scope = CoroutineScope(Dispatchers.IO)
 
-    val microphoneSgaredFlow = MicrophoneSharedFlow()
+    val microphoneSharedFlow = MicrophoneSharedFlow()
 
     val recognizerNew = RecognizerNew(
-        accessKey = accessToken,
-        sourceFlow = microphoneSgaredFlow.audioFlow,
+        sourceFlow = microphoneSharedFlow.audioFlow,
         coroutineScope = scope
     )
 
@@ -27,13 +32,13 @@ fun main() {
             }
     }
 
-    microphoneSgaredFlow.run()
+    microphoneSharedFlow.run()
 
     runBlocking {
         delay(2000)
     }
 
-    scope.cancel()
+   scope.cancel()
 }
 
     fun applyResult(result: RecognitionResult) {
@@ -61,6 +66,21 @@ fun main() {
                 logger.info("Токен устарел, получаем новый...")
                //authManager.refreshAccessToken()
             }
+        }
+    }
+}
+
+@Composable
+@Preview
+fun App() {
+    var text by remember { mutableStateOf("Hello, World!") }
+
+    MaterialTheme {
+        Button(
+            onClick = { text = "Hello, Desktop!" },
+            modifier = Modifier.testTag("button")
+        ) {
+            Text(text)
         }
     }
 }
