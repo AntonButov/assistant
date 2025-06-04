@@ -17,10 +17,7 @@ import tech.antonbutov.api.recognizerNew.RecognizerNew
 fun main() = application {
     val scope = CoroutineScope(Dispatchers.IO)
 
-    val microphoneSharedFlow = MicrophoneSharedFlow()
-
     val recognizerNew = RecognizerNew(
-        sourceFlow = microphoneSharedFlow.audioFlow,
         coroutineScope = scope
     )
 
@@ -32,13 +29,13 @@ fun main() = application {
             }
     }
 
-    microphoneSharedFlow.run()
+    recognizerNew.run()
 
-    runBlocking {
-        delay(2000)
-    }
+  //  runBlocking {
+ //       delay(2000)
+  //  }
 
-   scope.cancel()
+  // scope.cancel()
 }
 
     fun applyResult(result: RecognitionResult) {

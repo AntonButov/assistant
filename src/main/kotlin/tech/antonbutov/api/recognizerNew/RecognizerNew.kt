@@ -1,5 +1,6 @@
 package tech.antonbutov.api.recognizerNew
 
+import MicrophoneSharedFlow
 import SpeechKitAuth
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
@@ -11,6 +12,7 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
@@ -27,10 +29,11 @@ import java.util.logging.Logger
 
 class RecognizerNew(
     private val speechKitAuth: SpeechKitAuth = SpeechKitAuth(),
-    private val sourceFlow: Flow<ByteArray>,
+    private val microphoneSharedFlow: MicrophoneSharedFlow = MicrophoneSharedFlow(),
     private val coroutineScope: CoroutineScope,
 ) : Closeable {
 
+    private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
     private lateinit var accessKey: String
     private val _recognisedFlow: MutableStateFlow<RecognitionResult> = MutableStateFlow(RecognitionResult.Transcription("Strart", false))
     val recognizedFlow: Flow<RecognitionResult> = _recognisedFlow
@@ -76,7 +79,13 @@ class RecognizerNew(
                     close()
                 }
                 .collect()
+          //  delay(2000)
+          //  microphoneSharedFlow.run()
         }
+    }
+
+    fun run() {
+        microphoneSharedFlow.run() // я не понимаю почему так работает
     }
 
     override fun close() {
