@@ -14,6 +14,7 @@ coroutines = "1.7.3"
 slf4j = "2.0.9"
 logback = "1.4.11"
 kotlinxSerialization = "1.6.0"
+skiko = "0.7.80"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
@@ -29,6 +30,7 @@ compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", v
 compose-material = { module = "org.jetbrains.compose.material:material", version.ref = "compose" }
 compose-desktop = { module = "org.jetbrains.compose.desktop:desktop", version.ref = "compose" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose" }
+skiko = { module = "org.jetbrains.skiko:skiko-awt-runtime-macos-arm64", version.ref = "skiko" }
 
 # Coroutines
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }

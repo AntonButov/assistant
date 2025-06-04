@@ -21,12 +21,12 @@ class MicrophoneSharedFlow() {
     val format = AudioFormat(16000f, 16, 1, true, true)
     val info = DataLine.Info(TargetDataLine::class.java, format)
 
-    fun run() {
+    suspend fun run() = withContext(Dispatchers.IO) {
         logger.info("Начало записи...")
 
         if (!AudioSystem.isLineSupported(info)) {
             logger.info("Линия не поддерживается")
-            return
+            return@withContext
         }
 
         val line = AudioSystem.getLine(info) as TargetDataLine

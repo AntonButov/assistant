@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.compose.material)
     implementation(libs.compose.ui)
     implementation(libs.compose.desktop)
+    implementation(libs.skiko)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)

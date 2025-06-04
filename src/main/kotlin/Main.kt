@@ -9,27 +9,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
 import tech.antonbutov.api.models.RecognitionResult
 import tech.antonbutov.api.recognizerNew.RecognizerNew
 
 fun main() = application {
-    val scope = CoroutineScope(Dispatchers.IO)
-
-    val recognizerNew = RecognizerNew(
-        coroutineScope = scope
-    )
-
-    scope.launch {
-        recognizerNew
-            .recognizedFlow
-            .collect { result ->
-                applyResult(result)
-            }
+    Window(onCloseRequest = ::exitApplication) {
+        App()
     }
-
-    recognizerNew.run()
 
   //  runBlocking {
  //       delay(2000)
@@ -70,14 +59,35 @@ fun main() = application {
 @Composable
 @Preview
 fun App() {
+    val scope = CoroutineScope(Dispatchers.IO)
+    val recognizerNew = remember {
+        RecognizerNew(
+            coroutineScope = scope
+        )
+    }
+
+    scope.launch {
+        recognizerNew
+            .recognizedFlow
+            .collect { result ->
+                applyResult(result)
+            }
+    }
+
     var text by remember { mutableStateOf("Hello, World!") }
 
     MaterialTheme {
         Button(
-            onClick = { text = "Hello, Desktop!" },
+            onClick = { text = "Hello, Desktop!"
+                recognizerNew.run()
+                      },
             modifier = Modifier.testTag("button")
         ) {
             Text(text)
         }
+    }
+
+    scope.launch {
+      //  recognizerNew.run()
     }
 }

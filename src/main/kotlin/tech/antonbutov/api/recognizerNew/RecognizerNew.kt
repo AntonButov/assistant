@@ -85,7 +85,9 @@ class RecognizerNew(
     }
 
     fun run() {
-        microphoneSharedFlow.run() // я не понимаю почему так работает
+        coroutineScope.launch {
+            microphoneSharedFlow.run()
+        } // я не понимаю почему так работает
     }
 
     override fun close() {
