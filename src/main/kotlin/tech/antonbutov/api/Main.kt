@@ -1,3 +1,5 @@
+package tech.antonbutov.api
+
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -14,19 +16,20 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
 import tech.antonbutov.api.models.RecognitionResult
-import tech.antonbutov.api.recognizerNew.RecognizerNew
 
-fun main() = application {
-    val recognizerNew = remember {
-        RecognizerNew(SpeechKitAuth(), MicrophoneSharedFlow())
+fun main() =
+    application {
+        val recognizerNew =
+            remember {
+                RecognizerNew(SpeechKitAuth(), MicrophoneSharedFlow())
+            }
+        Window(onCloseRequest = {
+            recognizerNew.close()
+            exitApplication()
+        }) {
+            App(recognizerNew)
+        }
     }
-    Window(onCloseRequest = {
-        recognizerNew.close()
-        exitApplication()
-    }) {
-        App(recognizerNew)
-    }
-}
 
 fun applyResult(result: RecognitionResult) {
     val logger = LoggerAssistant
@@ -77,7 +80,7 @@ fun App(recognizerNew: RecognizerNew) {
                 text = "Hello, Desktop!"
                 // recognizerNew.run()
             },
-            modifier = Modifier.testTag("button")
+            modifier = Modifier.testTag("button"),
         ) {
             Text("Start")
         }

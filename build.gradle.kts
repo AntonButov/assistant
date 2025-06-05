@@ -1,10 +1,13 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.compose)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ktorfit)
     alias(libs.plugins.serialization)
+    alias(libs.plugins.kapt)
+    alias(libs.plugins.ksp)
 }
 
 group = "tech.antonbutov"
@@ -17,6 +20,12 @@ repositories {
 }
 
 dependencies {
+    // DI
+    ksp(libs.dagger.dsl.processor)
+    implementation(libs.dagger.dsl.core)
+    kapt(libs.dagger.kapt)
+    implementation(libs.dagger)
+
     // Compose - важно добавить runtime явно
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)

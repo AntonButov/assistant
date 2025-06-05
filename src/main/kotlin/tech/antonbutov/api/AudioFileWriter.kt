@@ -1,8 +1,10 @@
+package tech.antonbutov.api
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.RandomAccessFile
+import java.lang.Short
 import javax.sound.sampled.AudioFileFormat
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioInputStream
@@ -14,7 +16,7 @@ import javax.sound.sampled.TargetDataLine
  * Записывает аудио из SharedFlow в WAV-файл
  */
 class WriterAudio(
-    outputFile: File
+    outputFile: File,
 ) {
     val rafWav = RandomAccessFile(outputFile, "rw")
     val audioFormat = AudioFormat(16000f, 16, 1, true, false)
@@ -39,9 +41,7 @@ class WriterAudio(
         LoggerAssistant.info("Запись в файл завершена, сохранено ${totalBytesWritten / 1024} KB")
     }
 
-    fun writeBytes(
-        audioChunk: ByteArray
-    ) {
+    fun writeBytes(audioChunk: ByteArray) {
         LoggerAssistant.info("Записываем ${audioChunk.size} байт")
         val position = 44 + totalBytesWritten
         rafWav.seek(position.toLong())
@@ -52,7 +52,11 @@ class WriterAudio(
     }
 
     // Функция для записи WAV-заголовка
-    private fun writeWavHeader(file: RandomAccessFile, audioDataLength: Int, audioFormat: AudioFormat) {
+    private fun writeWavHeader(
+        file: RandomAccessFile,
+        audioDataLength: Int,
+        audioFormat: AudioFormat,
+    ) {
         file.seek(0)
 
         // RIFF header
@@ -63,19 +67,19 @@ class WriterAudio(
         // fmt subchunk
         file.writeBytes("fmt ") // Subchunk1ID
         file.writeInt(Integer.reverseBytes(16)) // Subchunk1Size (16 for PCM)
-        file.writeShort(java.lang.Short.reverseBytes(1.toShort()).toInt()) // AudioFormat (1 for PCM)
-        file.writeShort(java.lang.Short.reverseBytes(audioFormat.channels.toShort()).toInt()) // NumChannels
+        file.writeShort(Short.reverseBytes(1.toShort()).toInt()) // AudioFormat (1 for PCM)
+        file.writeShort(Short.reverseBytes(audioFormat.channels.toShort()).toInt()) // NumChannels
         file.writeInt(Integer.reverseBytes(audioFormat.sampleRate.toInt())) // SampleRate
 
         val byteRate = (audioFormat.sampleRate * audioFormat.channels * audioFormat.sampleSizeInBits / 8).toInt()
         file.writeInt(Integer.reverseBytes(byteRate)) // ByteRate
 
         val blockAlign = (audioFormat.channels * audioFormat.sampleSizeInBits / 8).toShort()
-        file.writeShort(java.lang.Short.reverseBytes(blockAlign).toInt()) // BlockAlign
+        file.writeShort(Short.reverseBytes(blockAlign).toInt()) // BlockAlign
 
         // Convert sampleSizeInBits to Short before calling reverseBytes
         val bitsPerSample = audioFormat.sampleSizeInBits.toShort()
-        file.writeShort(java.lang.Short.reverseBytes(bitsPerSample).toInt()) // BitsPerSample
+        file.writeShort(Short.reverseBytes(bitsPerSample).toInt()) // BitsPerSample
 
         // data subchunk
         file.writeBytes("data") // Subchunk2ID
