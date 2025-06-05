@@ -2,21 +2,14 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.logging.Level
-import java.util.logging.Logger
 import javax.sound.sampled.*
 
-/**
- * Класс для работы с микрофоном и получения аудиоданных через Flow
- */
 class MicrophoneSharedFlow() {
     // Поток аудиоданных доступный извне
     private val _audioFlow = MutableSharedFlow<ByteArray>(extraBufferCapacity = 1)
 
     private val logger = LoggerAssistant
-    val audioFlow: SharedFlow<ByteArray> = _audioFlow.asSharedFlow()
+    val audioFlow: Flow<ByteArray> = _audioFlow.asSharedFlow()
 
     val format = AudioFormat(16000f, 16, 1, true, true)
     val info = DataLine.Info(TargetDataLine::class.java, format)

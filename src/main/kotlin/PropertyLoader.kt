@@ -1,6 +1,5 @@
 import java.io.FileInputStream
 import java.util.Properties
-import java.util.logging.Level
 import java.util.logging.Logger
 
 class PropertyLoader {
@@ -9,10 +8,10 @@ class PropertyLoader {
         private val properties = Properties()
 
         init {
-                val localPropertiesFile = FileInputStream("local.properties")
-                properties.load(localPropertiesFile)
-                localPropertiesFile.close()
-                logger.info("Properties loaded successfully")
+            val localPropertiesFile = FileInputStream("local.properties")
+            properties.load(localPropertiesFile)
+            localPropertiesFile.close()
+            logger.info("Properties loaded successfully")
         }
 
         fun getProperty(key: String): String {

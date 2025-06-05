@@ -1,16 +1,10 @@
-import LoggerAssistant
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.launch
+
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.RandomAccessFile
-import java.util.logging.Logger
-import javax.sound.sampled.AudioFormat
-import java.util.concurrent.atomic.AtomicInteger
 import javax.sound.sampled.AudioFileFormat
+import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
@@ -20,7 +14,7 @@ import javax.sound.sampled.TargetDataLine
  * Записывает аудио из SharedFlow в WAV-файл
  */
 class WriterAudio(
-    outputFile: File,
+    outputFile: File
 ) {
     val rafWav = RandomAccessFile(outputFile, "rw")
     val audioFormat = AudioFormat(16000f, 16, 1, true, false)
@@ -46,7 +40,7 @@ class WriterAudio(
     }
 
     fun writeBytes(
-        audioChunk: ByteArray,
+        audioChunk: ByteArray
     ) {
         LoggerAssistant.info("Записываем ${audioChunk.size} байт")
         val position = 44 + totalBytesWritten
@@ -90,7 +84,6 @@ class WriterAudio(
 }
 
 // Остальные вспомогательные функции остаются без изменений
-
 
 fun main() {
     val format = AudioFormat(16000f, 16, 1, true, true)

@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -16,20 +17,20 @@ import tech.antonbutov.api.models.RecognitionResult
 import tech.antonbutov.api.recognizerNew.RecognizerNew
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication) {
-        App()
+    val recognizerNew = remember {
+        RecognizerNew(SpeechKitAuth(), MicrophoneSharedFlow())
     }
-
-  //  runBlocking {
- //       delay(2000)
-  //  }
-
-  // scope.cancel()
+    Window(onCloseRequest = {
+        recognizerNew.close()
+        exitApplication()
+    }) {
+        App(recognizerNew)
+    }
 }
 
-    fun applyResult(result: RecognitionResult) {
-        val logger = LoggerAssistant
-        logger.info("Результат распознавания: $result")
+fun applyResult(result: RecognitionResult) {
+    val logger = LoggerAssistant
+    logger.info("Результат распознавания: $result")
     when (result) {
         is RecognitionResult.Transcription -> {
             logger.info("Текст: ${result.text}")
@@ -50,7 +51,7 @@ fun main() = application {
             logger.info("Ошибка: ${result.message}")
             if (result.message.contains("UNAUTHENTICATED")) {
                 logger.info("Токен устарел, получаем новый...")
-               //authManager.refreshAccessToken()
+                // authManager.refreshAccessToken()
             }
         }
     }
@@ -58,14 +59,8 @@ fun main() = application {
 
 @Composable
 @Preview
-fun App() {
-    val scope = CoroutineScope(Dispatchers.IO)
-    val recognizerNew = remember {
-        RecognizerNew(
-            coroutineScope = scope
-        )
-    }
-
+fun App(recognizerNew: RecognizerNew) {
+    val scope = rememberCoroutineScope()
     scope.launch {
         recognizerNew
             .recognizedFlow
@@ -74,20 +69,17 @@ fun App() {
             }
     }
 
-    var text by remember { mutableStateOf("Hello, World!") }
+    var text by remember { mutableStateOf("Start") }
 
     MaterialTheme {
         Button(
-            onClick = { text = "Hello, Desktop!"
-                recognizerNew.run()
-                      },
+            onClick = {
+                text = "Hello, Desktop!"
+                // recognizerNew.run()
+            },
             modifier = Modifier.testTag("button")
         ) {
-            Text(text)
+            Text("Start")
         }
-    }
-
-    scope.launch {
-      //  recognizerNew.run()
     }
 }

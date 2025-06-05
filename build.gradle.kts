@@ -58,6 +58,13 @@ dependencies {
     // Kotlin
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
+
+    // MockK
+    testImplementation("io.mockk:mockk:1.13.8")
+
+    // For using Compose in tests
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
 
 // Настройка Ktorfit
@@ -125,7 +132,7 @@ ktlint {
 // Привязка ktlintFormat к задачам test, build и run
 tasks.named("test").configure { dependsOn("ktlintFormat") }
 tasks.named("build").configure { dependsOn("ktlintFormat") }
-//tasks.named("run").configure { dependsOn("ktlintFormat") }
+// tasks.named("run").configure { dependsOn("ktlintFormat") }
 
 ktlint {
     ktLintConfig()

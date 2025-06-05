@@ -11,11 +11,9 @@ import javax.sound.sampled.*
  * Creates a flow that emits audio data from the microphone
  */
 fun microphoneFlow(logger: Logger): Flow<ByteArray> {
-
     logger.info("Starting microphone flow")
 
     return callbackFlow {
-
         val audioFormat = AudioFormat(16000f, 16, 1, true, false)
         val targetInfo = DataLine.Info(TargetDataLine::class.java, audioFormat)
 
@@ -38,11 +36,10 @@ fun microphoneFlow(logger: Logger): Flow<ByteArray> {
             val bytesRead = microphone.read(buffer, 0, buffer.size)
             if (bytesRead > 0) {
                 val audioChunk = buffer.copyOfRange(0, bytesRead)
-                logger.info("Sent audio chunk: ${bytesRead} bytes")
+                logger.info("Sent audio chunk: $bytesRead bytes")
                 trySend(audioChunk)
                 // logger.severe("Микрофон с указанным форматом не поддерживается")
                 // Буфер для чтения аудиоданных
-
             }
             delay(2000)
         }
@@ -51,7 +48,5 @@ fun microphoneFlow(logger: Logger): Flow<ByteArray> {
             microphone.stop()
             microphone.close()
         }
-
     }.flowOn(Dispatchers.IO)
 }
-

@@ -4,15 +4,19 @@ import MicrophoneSharedFlow
 import SpeechKitAuth
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
-import io.grpc.Metadata
-import io.grpc.stub.MetadataUtils
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import com.google.protobuf.ByteString
+import io.grpc.Metadata
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder
 import io.grpc.netty.shaded.io.netty.handler.ssl.util.InsecureTrustManagerFactory
+import io.grpc.stub.MetadataUtils
 import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
@@ -23,16 +27,24 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import tech.antonbutov.api.models.RecognitionResult
 import java.io.Closeable
-import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 
-class RecognizerNew(
-    private val speechKitAuth: SpeechKitAuth = SpeechKitAuth(),
-    private val microphoneSharedFlow: MicrophoneSharedFlow = MicrophoneSharedFlow(),
-    private val coroutineScope: CoroutineScope,
-) : Closeable {
+interface RecognizerInterface {
+    val stateButton: State<StateButton>
+    fun click()
+}
 
+sealed interface StateButton {
+    data object Idle : StateButton
+    data object Start : StateButton
+}
+
+class RecognizerNew(
+    private val speechKitAuth: SpeechKitAuth,
+    private val microphoneSharedFlow: MicrophoneSharedFlow,
+    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+) : RecognizerInterface, Closeable {
     private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
     private lateinit var accessKey: String
     private val _recognisedFlow: MutableStateFlow<RecognitionResult> = MutableStateFlow(RecognitionResult.Transcription("Strart", false))
@@ -76,15 +88,26 @@ class RecognizerNew(
                     requestObserver.onNext(it.toChunk())
                 }
                 .onCompletion {
-                    close()
+                    // close()
                 }
                 .collect()
-          //  delay(2000)
-          //  microphoneSharedFlow.run()
         }
     }
 
-    fun run() {
+    override fun click() {
+        when (stateButton.value) {
+            StateButton.Idle -> {
+                run()
+                _stateButton.value = StateButton.Start
+            }
+
+            StateButton.Start -> {
+                _stateButton.value = StateButton.Idle
+            }
+        }
+    }
+
+    private fun run() {
         coroutineScope.launch {
             microphoneSharedFlow.run()
         } // я не понимаю почему так работает
@@ -94,6 +117,7 @@ class RecognizerNew(
         requestObserver.onCompleted()
         logger.info("Закрытие клиента распознавания речи")
         channel.shutdown()
+        coroutineScope.cancel()
     }
 
     private fun createStreamObserver() =
@@ -116,7 +140,7 @@ class RecognizerNew(
                             if (isFinal) {
                                 restartObserver()
                             }
-                            //logger.info("Распознано: $resultText (финальный: $isEou)")
+                            // logger.info("Распознано: $resultText (финальный: $isEou)")
                         }
                     }
 
@@ -125,7 +149,7 @@ class RecognizerNew(
                         _recognisedFlow.update {
                             RecognitionResult.BackendInfo(
                                 modelName = backendInfo.modelName,
-                                modelVersion = backendInfo.modelVersion,
+                                modelVersion = backendInfo.modelVersion
                             )
                         }
                     }
@@ -160,7 +184,7 @@ class RecognizerNew(
         }
 
     private fun restartObserver() {
-       //
+        //
     }
 
     private fun createOptions(): Salutespeech.RecognitionRequest {
@@ -178,24 +202,27 @@ class RecognizerNew(
 
         // Создаем запрос с опциями
         return Salutespeech.RecognitionRequest.newBuilder()
-                .setOptions(options)
-                .build()
+            .setOptions(options)
+            .build()
     }
 
     private fun createStub(): SmartSpeechGrpc.SmartSpeechStub {
-            val headers = Metadata()
-            val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
-            val scopeKey = Metadata.Key.of("Content-Scope", Metadata.ASCII_STRING_MARSHALLER)
-            headers.put(authKey, "Bearer $accessKey")
-            headers.put(scopeKey, scope)
+        val headers = Metadata()
+        val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
+        val scopeKey = Metadata.Key.of("Content-Scope", Metadata.ASCII_STRING_MARSHALLER)
+        headers.put(authKey, "Bearer $accessKey")
+        headers.put(scopeKey, scope)
 
-            // Создаем стаб с установленными заголовками
-            return SmartSpeechGrpc.newStub(channel)
-                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
-             ///   .withDeadlineAfter(30, TimeUnit.SECONDS)
+        // Создаем стаб с установленными заголовками
+        return SmartSpeechGrpc.newStub(channel)
+            .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
+        // /   .withDeadlineAfter(30, TimeUnit.SECONDS)
     }
+
+    private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
+    override val stateButton: State<StateButton> = _stateButton
 }
 
 private fun ByteArray.toChunk() = Salutespeech.RecognitionRequest.newBuilder()
-            .setAudioChunk(ByteString.copyFrom(this))
-            .build()
+    .setAudioChunk(ByteString.copyFrom(this))
+    .build()

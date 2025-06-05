@@ -13,8 +13,7 @@ import java.util.*
 import java.util.logging.Level
 import java.util.logging.Logger
 
-class SpeechKitAuth(
-) {
+class SpeechKitAuth() {
     val authorizationKey = PropertyLoader.getProperty("speechkit.authorization.key")
     val scope = "SALUTE_SPEECH_PERS"
 
@@ -46,11 +45,13 @@ class SpeechKitAuth(
         }
 
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                prettyPrint = true
-                isLenient = true
-            })
+            json(
+                Json {
+                    ignoreUnknownKeys = true
+                    prettyPrint = true
+                    isLenient = true
+                }
+            )
         }
 
         install(Logging) {
@@ -72,7 +73,6 @@ class SpeechKitAuth(
     }
 
     suspend fun refreshAccessToken() {
-
         try {
             val rquid = UUID.randomUUID().toString()
 
@@ -90,12 +90,12 @@ class SpeechKitAuth(
                 }
             }.body<OAuthResponse>()
 
-        accessToken = response.access_token
+            accessToken = response.access_token
 
-        // Устанавливаем время истечения срока действия токена с запасом в 5 минут
-        tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
+            // Устанавливаем время истечения срока действия токена с запасом в 5 минут
+            tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
 
-           // logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
+            // logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Ошибка при обновлении токена", e)
             accessToken = null
