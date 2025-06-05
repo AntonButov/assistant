@@ -65,6 +65,8 @@ dependencies {
     // For using Compose in tests
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.junit)
 }
 
 // Настройка Ktorfit
