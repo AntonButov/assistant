@@ -19,7 +19,7 @@ junit = "5.10.2"
 junitVersion = "4.13.2"
 ksp = "2.1.21-2.0.1"
 daggerDsl = "1.1.0-alpha"
-dagger = "2.51.1"
+dagger = "2.56.2"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }

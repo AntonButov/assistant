@@ -1,4 +1,3 @@
-package tech.antonbutov.api
 
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
@@ -28,12 +27,6 @@ import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.inject.Inject
-
-interface RecognizerInterface {
-    val stateButton: State<StateButton>
-
-    fun click()
-}
 
 sealed interface StateButton {
     data object Idle : StateButton

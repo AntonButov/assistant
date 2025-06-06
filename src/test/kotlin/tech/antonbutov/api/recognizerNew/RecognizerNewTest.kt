@@ -1,5 +1,9 @@
 package tech.antonbutov.api.recognizerNew
 
+import MicrophoneSharedFlow
+import RecognizerNew
+import SpeechKitAuth
+import StateButton
 import androidx.compose.runtime.getValue
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -13,10 +17,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
-import tech.antonbutov.api.MicrophoneSharedFlow
-import tech.antonbutov.api.RecognizerNew
-import tech.antonbutov.api.SpeechKitAuth
-import tech.antonbutov.api.StateButton
 
 @ExperimentalCoroutinesApi
 class RecognizerNewButtonTest {

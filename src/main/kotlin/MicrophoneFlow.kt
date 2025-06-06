@@ -1,5 +1,3 @@
-package tech.antonbutov.api
-
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
