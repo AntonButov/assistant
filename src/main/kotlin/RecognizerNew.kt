@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import tech.antonbutov.api.models.RecognitionResult
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger

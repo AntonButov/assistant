@@ -1,8 +1,3 @@
-package tech.antonbutov.api
-
-import MicrophoneSharedFlow
-import RecognizerNew
-import SpeechKitAuth
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -18,7 +13,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
-import tech.antonbutov.api.models.RecognitionResult
 
 fun main() =
     application {

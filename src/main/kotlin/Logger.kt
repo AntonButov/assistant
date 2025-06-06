@@ -1,5 +1,3 @@
-package tech.antonbutov.api
-
 import java.util.logging.Logger
 
 object LoggerAssistant {

@@ -11,8 +11,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import tech.antonbutov.api.PropertyLoader
-import tech.antonbutov.api.models.OAuthResponse
+import PropertyLoader
+import OAuthResponse
 import java.security.cert.X509Certificate
 import java.util.UUID
 import java.util.logging.Level
@@ -20,9 +20,7 @@ import java.util.logging.Logger
 import javax.inject.Inject
 import javax.net.ssl.X509TrustManager
 
-class SpeechKitAuth
-    @Inject
-    constructor() {
+class SpeechKitAuth @Inject constructor() {
         val authorizationKey = PropertyLoader.Companion.getProperty("speechkit.authorization.key")
         val scope = "SALUTE_SPEECH_PERS"
 

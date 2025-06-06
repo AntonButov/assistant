@@ -1,5 +1,3 @@
-package tech.antonbutov.api.models
-
 import kotlinx.serialization.Serializable
 
 @Serializable

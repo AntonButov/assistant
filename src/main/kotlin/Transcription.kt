@@ -1,5 +1,3 @@
-package tech.antonbutov.api.models
-
 sealed class RecognitionResult {
     data class BackendInfo(
         val modelName: String,
