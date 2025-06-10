@@ -9,5 +9,5 @@ interface Component {
 
 @DaggerDsl
 fun di() = component<Component> {
-        provides<MicrophoneSharedFlow> { MicrophoneSharedFlow() }
+
     }
