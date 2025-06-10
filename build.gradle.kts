@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.compose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
@@ -106,12 +105,6 @@ protobuf {
                 create("kotlin")
             }
         }
-    }
-}
-
-compose.desktop {
-    application {
-        mainClass = "MainKt"
     }
 }
 
