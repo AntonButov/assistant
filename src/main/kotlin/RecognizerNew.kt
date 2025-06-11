@@ -37,6 +37,7 @@ sealed interface StateButton {
 class RecognizerNew(
         private val speechKitAuth: SpeechKitAuth,
         private val microphoneSharedFlow: MicrophoneSharedFlow,
+        private val stringBuffer: StringBuffer,
     ) : RecognizerInterface, Closeable {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
@@ -127,7 +128,7 @@ class RecognizerNew(
                             }
 
                         if (resultText.isNotEmpty()) {
-                            TODO()
+                            stringBuffer.add(resultText)
 
                             logger.info("Распознано: $resultText (финальный: $isFinal)")
                         }
