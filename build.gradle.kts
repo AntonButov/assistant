@@ -19,11 +19,6 @@ repositories {
 }
 
 dependencies {
-    // DI
-    ksp(libs.dagger.dsl.processor)
-    implementation(libs.dagger.dsl.core)
-    kapt(libs.dagger.kapt)
-    implementation(libs.dagger)
 
     // Compose - важно добавить runtime явно
     implementation(libs.compose.runtime)
