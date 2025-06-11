@@ -1,4 +1,5 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -38,54 +39,31 @@ fun main() =
 fun App(recognizerNew: RecognizerNew) {
     val scope = rememberCoroutineScope()
     scope.launch {
-        recognizerNew
-            .recognizedFlow
-            .collect { result ->
-                applyResult(result)
-            }
+      //  recognizerNew
+      //      .recognizedFlow
+      //      .collect { result ->
+     //           applyResult(result)
+      //      }
     }
 
     MaterialTheme {
-
-        Button(
-            onClick = {
-                recognizerNew.click()
-            },
-        ) {
-            val buttonText = when (recognizerNew.stateButton.value) {
-                StateButton.Idle -> "Start"
-                StateButton.Start -> "Stop"
+        Column {
+            Button(
+                onClick = {
+                    recognizerNew.click()
+                },
+            ) {
+                val buttonText = when (recognizerNew.stateButton.value) {
+                    StateButton.Idle -> "Start"
+                    StateButton.Start -> "Stop"
+                }
+                Text(buttonText)
             }
-            Text(buttonText)
+            Text(
+                text = "Текст",
+            )
+
         }
     }
 }
 
-fun applyResult(result: RecognitionResult) {
-    val logger = LoggerAssistant
-    logger.info("Результат распознавания: $result")
-    when (result) {
-        is RecognitionResult.Transcription -> {
-            logger.info("Текст: ${result.text}")
-            if (result.isFinal) logger.info("ФИНАЛЬНЫЙ РЕЗУЛЬТАТ: ${result.text}")
-        }
-
-        is RecognitionResult.BackendInfo -> {
-        }
-
-        is RecognitionResult.Insight -> {
-            logger.info("Insight: ${result.data}")
-        }
-
-        is RecognitionResult.VadInfo ->
-            logger.info("Голосовая активность: ${if (result.hasVoice) "Есть голос" else "Нет голоса"}")
-
-        is RecognitionResult.Error -> {
-            logger.info("Ошибка: ${result.message}")
-            if (result.message.contains("UNAUTHENTICATED")) {
-                logger.info("Токен устарел, получаем новый...")
-                // authManager.refreshAccessToken()
-            }
-        }
-    }
-}

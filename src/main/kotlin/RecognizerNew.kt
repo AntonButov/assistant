@@ -5,6 +5,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
@@ -40,9 +41,6 @@ class RecognizerNew(
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
     private lateinit var accessKey: String
-    private val _recognisedFlow: MutableStateFlow<RecognitionResult> =
-        MutableStateFlow(RecognitionResult.Transcription("Strart", false))
-    val recognizedFlow: Flow<RecognitionResult> = _recognisedFlow
     private val scope: String = "SALUTE_SPEECH_PERS"
 
     private val languageCode = "ru-RU"
@@ -129,46 +127,31 @@ class RecognizerNew(
                             }
 
                         if (resultText.isNotEmpty()) {
-                            _recognisedFlow.update {
-                                RecognitionResult.Transcription(resultText, isFinal)
-                            }
-                            if (isFinal) {
-                                restartObserver()
-                            }
-                            // logger.info("Распознано: $resultText (финальный: $isEou)")
+                            TODO()
+
+                            logger.info("Распознано: $resultText (финальный: $isFinal)")
                         }
                     }
 
                     response.hasBackendInfo() -> {
-                        val backendInfo = response.backendInfo
-                        _recognisedFlow.update {
-                            RecognitionResult.BackendInfo(
-                                modelName = backendInfo.modelName,
-                                modelVersion = backendInfo.modelVersion,
-                            )
-                        }
+                        logger.info("Получен backend info: ${response.backendInfo}")
                     }
 
                     response.hasInsight() -> {
-                        _recognisedFlow.update {
-                            RecognitionResult.Insight(response.insight.insightResult)
-                        }
                         logger.info("Получен insight: ${response.insight.insightResult}")
                     }
 
                     response.hasVad() -> {
-                        _recognisedFlow.update {
-                            RecognitionResult.VadInfo(true)
-                        }
+                        logger.info("Получен insight: ${response.insight.insightResult}")
                     }
                 }
             }
 
             override fun onError(t: Throwable) {
                 logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                _recognisedFlow.update {
-                    RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
-                }
+                //_recognisedFlow.update {
+              //      RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
+              //  }
                 // close(t)
             }
 
