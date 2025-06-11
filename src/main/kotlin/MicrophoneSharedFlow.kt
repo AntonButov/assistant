@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import javax.inject.Inject
 import javax.sound.sampled.AudioFileFormat
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioInputStream
@@ -13,9 +12,7 @@ import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
 
-class MicrophoneSharedFlow
-    @Inject
-    constructor() {
+class MicrophoneSharedFlow {
         // Поток аудиоданных доступный извне
         private val _audioFlow = MutableSharedFlow<ByteArray>(extraBufferCapacity = 1)
 

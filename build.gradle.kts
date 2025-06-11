@@ -19,6 +19,8 @@ repositories {
 }
 
 dependencies {
+    // Koin
+    implementation(libs.koin)
 
     // Compose - важно добавить runtime явно
     implementation(libs.compose.runtime)

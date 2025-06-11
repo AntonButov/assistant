@@ -18,8 +18,7 @@ skiko = "0.7.80"
 junit = "5.10.2"
 junitVersion = "4.13.2"
 ksp = "2.1.21-2.0.1"
-daggerDsl = "1.1.0-alpha"
-dagger = "2.56.2"
+koin = "3.5.3"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
@@ -75,10 +74,7 @@ junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", vers
 junit = { group = "junit", name = "junit", version.ref = "junitVersion" }
 
 # DI
-dagger = { module = "com.google.dagger:dagger", version.ref = "dagger" }
-dagger-kapt = { module = "com.google.dagger:dagger-compiler", version.ref = "dagger" }
-dagger-dsl-core = { module = "io.github.antonbutov:dagger-dsl-core", version.ref = "daggerDsl" }
-dagger-dsl-processor = { module = "io.github.antonbutov:dagger-dsl-processor", version.ref = "daggerDsl" }
+koin = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

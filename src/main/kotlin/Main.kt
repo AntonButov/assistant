@@ -13,12 +13,16 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
+import org.koin.core.context.GlobalContext.startKoin
 
 fun main() =
     application {
+        val koin = startKoin {
+            modules(appModule)
+        }
         val recognizerNew =
             remember {
-                RecognizerNew(SpeechKitAuth(), MicrophoneSharedFlow())
+                koin.koin.get<RecognizerNew>()
             }
         Window(onCloseRequest = {
             recognizerNew.close()

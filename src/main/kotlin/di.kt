@@ -1,5 +1,8 @@
 
-import dagger.dsl.core.DaggerDsl
-import dagger.dsl.core.component
-import dagger.dsl.core.get
+import org.koin.dsl.module
 
+val appModule = module {
+    factory { SpeechKitAuth() }
+    factory { MicrophoneSharedFlow() }
+    factory { RecognizerNew(get(), get()) }
+}

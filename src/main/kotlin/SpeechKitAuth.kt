@@ -17,10 +17,9 @@ import java.security.cert.X509Certificate
 import java.util.UUID
 import java.util.logging.Level
 import java.util.logging.Logger
-import javax.inject.Inject
 import javax.net.ssl.X509TrustManager
 
-class SpeechKitAuth @Inject constructor() {
+class SpeechKitAuth {
         val authorizationKey = PropertyLoader.Companion.getProperty("speechkit.authorization.key")
         val scope = "SALUTE_SPEECH_PERS"
 

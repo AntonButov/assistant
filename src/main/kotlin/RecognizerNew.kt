@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger
-import javax.inject.Inject
 
 sealed interface StateButton {
     data object Idle : StateButton
@@ -33,9 +32,7 @@ sealed interface StateButton {
     data object Start : StateButton
 }
 
-class RecognizerNew
-    @Inject
-    constructor(
+class RecognizerNew(
         private val speechKitAuth: SpeechKitAuth,
         private val microphoneSharedFlow: MicrophoneSharedFlow,
     ) : RecognizerInterface, Closeable {
