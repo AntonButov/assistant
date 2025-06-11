@@ -77,11 +77,6 @@ dependencies {
     testImplementation(libs.junit)
 }
 
-// Настройка Ktorfit
-ktorfit {
-    version = "1.10.2"
-}
-
 // Протобаф конфигурация
 protobuf {
     protoc {
