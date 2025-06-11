@@ -96,9 +96,6 @@ protobuf {
                 create("grpc")
                 create("grpckt")
             }
-            it.builtins {
-                create("kotlin")
-            }
         }
     }
 }
