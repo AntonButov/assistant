@@ -3,6 +3,7 @@ import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
@@ -36,188 +37,189 @@ class RecognizerNew(
         private val speechKitAuth: SpeechKitAuth,
         private val microphoneSharedFlow: MicrophoneSharedFlow,
     ) : RecognizerInterface, Closeable {
-        private val coroutineScope = CoroutineScope(Dispatchers.IO)
-        private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
-        private lateinit var accessKey: String
-        private val _recognisedFlow: MutableStateFlow<RecognitionResult> =
-            MutableStateFlow(RecognitionResult.Transcription("Strart", false))
-        val recognizedFlow: Flow<RecognitionResult> = _recognisedFlow
-        private val scope: String = "SALUTE_SPEECH_PERS"
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
+    private lateinit var accessKey: String
+    private val _recognisedFlow: MutableStateFlow<RecognitionResult> =
+        MutableStateFlow(RecognitionResult.Transcription("Strart", false))
+    val recognizedFlow: Flow<RecognitionResult> = _recognisedFlow
+    private val scope: String = "SALUTE_SPEECH_PERS"
 
-        private val languageCode = "ru-RU"
-        private val sampleRate = 16000
+    private val languageCode = "ru-RU"
+    private val sampleRate = 16000
 
-        private val logger = Logger.getLogger(RecognizerNew::class.java.name)
-        private val channel =
-            NettyChannelBuilder.forTarget("smartspeech.sber.ru")
-                .useTransportSecurity()
-                .sslContext(
-                    GrpcSslContexts.forClient()
-                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                        .build(),
-                )
-                .build()
+    private val logger = Logger.getLogger(RecognizerNew::class.java.name)
+    private val channel =
+        NettyChannelBuilder.forTarget("smartspeech.sber.ru")
+            .useTransportSecurity()
+            .sslContext(
+                GrpcSslContexts.forClient()
+                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                    .build(),
+            )
+            .build()
 
-        private val stub by lazy { createStub() }
+    private val stub by lazy { createStub() }
 
-        private val optionsRequest = createOptions()
+    private val optionsRequest = createOptions()
 
-        private val streamObserver by lazy {
-            createStreamObserver()
+    private val streamObserver by lazy {
+        createStreamObserver()
+    }
+
+    private val requestObserver by lazy {
+        stub.recognize(streamObserver).also {
+            it.onNext(optionsRequest)
         }
+    }
 
-        private val requestObserver by lazy {
-            stub.recognize(streamObserver).also {
-                it.onNext(optionsRequest)
-            }
-        }
-
-        init {
-            coroutineScope.launch {
-                sourceFlow
-                    .onStart {
-                        accessKey = speechKitAuth.getAccessToken()
-                    }
-                    .onEach {
-                        requestObserver.onNext(it.toChunk())
-                    }
-                    .onCompletion {
-                        // close()
-                    }
-                    .collect()
-            }
-        }
-
-        override fun click() {
-            when (stateButton.value) {
-                StateButton.Idle -> {
-                    run()
-                    _stateButton.value = StateButton.Start
+    init {
+        coroutineScope.launch {
+            sourceFlow
+                .onStart {
+                    accessKey = speechKitAuth.getAccessToken()
                 }
-
-                StateButton.Start -> {
-                    _stateButton.value = StateButton.Idle
+                .onEach {
+                    requestObserver.onNext(it.toChunk())
                 }
-            }
-        }
-
-        private fun run() {
-            coroutineScope.launch {
-                microphoneSharedFlow.run()
-            } // я не понимаю почему так работает
-        }
-
-        override fun close() {
-            requestObserver.onCompleted()
-            logger.info("Закрытие клиента распознавания речи")
-            channel.shutdown()
-            coroutineScope.cancel()
-        }
-
-        private fun createStreamObserver() =
-            object : StreamObserver<Salutespeech.RecognitionResponse> {
-                override fun onNext(response: Salutespeech.RecognitionResponse) {
-                    when {
-                        response.hasTranscription() -> {
-                            val transcription = response.transcription
-                            val isFinal = transcription.eou
-
-                            val resultText =
-                                transcription.resultsList.joinToString(" ") { result ->
-                                    result.normalizedText.ifEmpty { result.text }
-                                }
-
-                            if (resultText.isNotEmpty()) {
-                                _recognisedFlow.update {
-                                    RecognitionResult.Transcription(resultText, isFinal)
-                                }
-                                if (isFinal) {
-                                    restartObserver()
-                                }
-                                // logger.info("Распознано: $resultText (финальный: $isEou)")
-                            }
-                        }
-
-                        response.hasBackendInfo() -> {
-                            val backendInfo = response.backendInfo
-                            _recognisedFlow.update {
-                                RecognitionResult.BackendInfo(
-                                    modelName = backendInfo.modelName,
-                                    modelVersion = backendInfo.modelVersion,
-                                )
-                            }
-                        }
-
-                        response.hasInsight() -> {
-                            _recognisedFlow.update {
-                                RecognitionResult.Insight(response.insight.insightResult)
-                            }
-                            logger.info("Получен insight: ${response.insight.insightResult}")
-                        }
-
-                        response.hasVad() -> {
-                            _recognisedFlow.update {
-                                RecognitionResult.VadInfo(true)
-                            }
-                        }
-                    }
-                }
-
-                override fun onError(t: Throwable) {
-                    logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                    _recognisedFlow.update {
-                        RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
-                    }
-                    // close(t)
-                }
-
-                override fun onCompleted() {
-                    logger.info("Распознавание завершено успешно")
+                .onCompletion {
                     // close()
                 }
+                .collect()
+        }
+    }
+
+    override fun click() {
+        when (_stateButton.value) {
+            StateButton.Idle -> {
+                run()
+                _stateButton.value = StateButton.Start
             }
 
-        private fun restartObserver() {
-            //
+            StateButton.Start -> {
+                _stateButton.value = StateButton.Idle
+            }
+        }
+    }
+
+    private fun run() {
+        coroutineScope.launch {
+            microphoneSharedFlow.run()
+        } // я не понимаю почему так работает
+    }
+
+    override fun close() {
+        requestObserver.onCompleted()
+        logger.info("Закрытие клиента распознавания речи")
+        channel.shutdown()
+        coroutineScope.cancel()
+    }
+
+    private fun createStreamObserver() =
+        object : StreamObserver<Salutespeech.RecognitionResponse> {
+            override fun onNext(response: Salutespeech.RecognitionResponse) {
+                when {
+                    response.hasTranscription() -> {
+                        val transcription = response.transcription
+                        val isFinal = transcription.eou
+
+                        val resultText =
+                            transcription.resultsList.joinToString(" ") { result ->
+                                result.normalizedText.ifEmpty { result.text }
+                            }
+
+                        if (resultText.isNotEmpty()) {
+                            _recognisedFlow.update {
+                                RecognitionResult.Transcription(resultText, isFinal)
+                            }
+                            if (isFinal) {
+                                restartObserver()
+                            }
+                            // logger.info("Распознано: $resultText (финальный: $isEou)")
+                        }
+                    }
+
+                    response.hasBackendInfo() -> {
+                        val backendInfo = response.backendInfo
+                        _recognisedFlow.update {
+                            RecognitionResult.BackendInfo(
+                                modelName = backendInfo.modelName,
+                                modelVersion = backendInfo.modelVersion,
+                            )
+                        }
+                    }
+
+                    response.hasInsight() -> {
+                        _recognisedFlow.update {
+                            RecognitionResult.Insight(response.insight.insightResult)
+                        }
+                        logger.info("Получен insight: ${response.insight.insightResult}")
+                    }
+
+                    response.hasVad() -> {
+                        _recognisedFlow.update {
+                            RecognitionResult.VadInfo(true)
+                        }
+                    }
+                }
+            }
+
+            override fun onError(t: Throwable) {
+                logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
+                _recognisedFlow.update {
+                    RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
+                }
+                // close(t)
+            }
+
+            override fun onCompleted() {
+                logger.info("Распознавание завершено успешно")
+                // close()
+            }
         }
 
-        private fun createOptions(): Salutespeech.RecognitionRequest {
-            val options =
-                Salutespeech.RecognitionOptions.newBuilder()
-                    .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
-                    .setSampleRate(sampleRate)
-                    .setChannelsCount(1)
-                    .setLanguage(languageCode)
-                    // Включаем поддержку множественных высказываний
-                    .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
-                    // Настраиваем распознавание длинных высказываний
-                    .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
-                    .build()
+    private fun restartObserver() {
+        //
+    }
 
-            // Создаем запрос с опциями
-            return Salutespeech.RecognitionRequest.newBuilder()
-                .setOptions(options)
+    private fun createOptions(): Salutespeech.RecognitionRequest {
+        val options =
+            Salutespeech.RecognitionOptions.newBuilder()
+                .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
+                .setSampleRate(sampleRate)
+                .setChannelsCount(1)
+                .setLanguage(languageCode)
+                // Включаем поддержку множественных высказываний
+                .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                // Настраиваем распознавание длинных высказываний
+                .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
                 .build()
-        }
 
-        private fun createStub(): SmartSpeechGrpc.SmartSpeechStub {
-            val headers = Metadata()
-            val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
-            val scopeKey = Metadata.Key.of("Content-Scope", Metadata.ASCII_STRING_MARSHALLER)
-            headers.put(authKey, "Bearer $accessKey")
-            headers.put(scopeKey, scope)
+        // Создаем запрос с опциями
+        return Salutespeech.RecognitionRequest.newBuilder()
+            .setOptions(options)
+            .build()
+    }
 
-            // Создаем стаб с установленными заголовками
-            return SmartSpeechGrpc.newStub(channel)
-                .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
-            // /   .withDeadlineAfter(30, TimeUnit.SECONDS)
-        }
+    private fun createStub(): SmartSpeechGrpc.SmartSpeechStub {
+        val headers = Metadata()
+        val authKey = Metadata.Key.of("Authorization", Metadata.ASCII_STRING_MARSHALLER)
+        val scopeKey = Metadata.Key.of("Content-Scope", Metadata.ASCII_STRING_MARSHALLER)
+        headers.put(authKey, "Bearer $accessKey")
+        headers.put(scopeKey, scope)
+
+        // Создаем стаб с установленными заголовками
+        return SmartSpeechGrpc.newStub(channel)
+            .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
+        // /   .withDeadlineAfter(30, TimeUnit.SECONDS)
+    }
 
         private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
         override val stateButton: State<StateButton> = _stateButton
     }
 
-private fun ByteArray.toChunk() =
-    Salutespeech.RecognitionRequest.newBuilder()
-        .setAudioChunk(ByteString.copyFrom(this))
-        .build()
+    private fun ByteArray.toChunk() =
+        Salutespeech.RecognitionRequest.newBuilder()
+            .setAudioChunk(ByteString.copyFrom(this))
+            .build()
+

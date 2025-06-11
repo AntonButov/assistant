@@ -85,3 +85,5 @@ serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref 
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+

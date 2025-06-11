@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.compose)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.ktlint)
     alias(libs.plugins.ktorfit)

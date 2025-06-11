@@ -14,6 +14,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
 import org.koin.core.context.GlobalContext.startKoin
+import kotlin.run
 
 fun main() =
     application {
@@ -31,6 +32,34 @@ fun main() =
             App(recognizerNew)
         }
     }
+
+@Composable
+@Preview
+fun App(recognizerNew: RecognizerNew) {
+    val scope = rememberCoroutineScope()
+    scope.launch {
+        recognizerNew
+            .recognizedFlow
+            .collect { result ->
+                applyResult(result)
+            }
+    }
+
+    MaterialTheme {
+
+        Button(
+            onClick = {
+                recognizerNew.click()
+            },
+        ) {
+            val buttonText = when (recognizerNew.stateButton.value) {
+                StateButton.Idle -> "Start"
+                StateButton.Start -> "Stop"
+            }
+            Text(buttonText)
+        }
+    }
+}
 
 fun applyResult(result: RecognitionResult) {
     val logger = LoggerAssistant
@@ -57,33 +86,6 @@ fun applyResult(result: RecognitionResult) {
                 logger.info("Токен устарел, получаем новый...")
                 // authManager.refreshAccessToken()
             }
-        }
-    }
-}
-
-@Composable
-@Preview
-fun App(recognizerNew: RecognizerNew) {
-    val scope = rememberCoroutineScope()
-    scope.launch {
-        recognizerNew
-            .recognizedFlow
-            .collect { result ->
-                applyResult(result)
-            }
-    }
-
-    var text by remember { mutableStateOf("Start") }
-
-    MaterialTheme {
-        Button(
-            onClick = {
-                text = "Hello, Desktop!"
-                // recognizerNew.run()
-            },
-            modifier = Modifier.testTag("button"),
-        ) {
-            Text("Start")
         }
     }
 }
