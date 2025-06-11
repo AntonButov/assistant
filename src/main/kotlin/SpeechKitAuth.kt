@@ -11,8 +11,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
-import PropertyLoader
-import OAuthResponse
 import java.security.cert.X509Certificate
 import java.util.UUID
 import java.util.logging.Level
@@ -101,10 +99,10 @@ class SpeechKitAuth {
                         }
                     }.body<OAuthResponse>()
 
-                accessToken = response.access_token
+                accessToken = response.accessToken
 
                 // Устанавливаем время истечения срока действия токена с запасом в 5 минут
-                tokenExpirationTime = System.currentTimeMillis() + (response.expires_at - 300) * 1000L
+                tokenExpirationTime = System.currentTimeMillis() + (response.expiresAt - 300) * 1000L
 
                 // logger.info("Получен новый токен доступа, действителен до: ${Date(tokenExpirationTime)}")
             } catch (e: Exception) {
