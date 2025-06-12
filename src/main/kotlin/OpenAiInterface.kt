@@ -5,6 +5,7 @@ import com.aallam.openai.api.chat.ChatMessage
 import com.aallam.openai.api.chat.ChatRole
 import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collect
@@ -21,9 +22,9 @@ interface OpenAiInterface {
 class OpenAi(private val openAi: OpenAI): OpenAiInterface {
     private val inputFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
-    override val output: Flow<String> = inputFlow.flatMapLatest {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val output: Flow<String> = inputFlow.flatMapLatest { it ->
         openAi.chatCompletions(it.toChatCompletionRequest())
-            .onEach { print(it.choices.first().delta.content.orEmpty()) }
             .map {
                 it.choices.first().delta.content.orEmpty()
             }
