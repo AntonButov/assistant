@@ -6,4 +6,5 @@ data class OAuthResponse(
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("expires_at")
-    val expiresAt: Long,)
+    val expiresAt: Long,
+)

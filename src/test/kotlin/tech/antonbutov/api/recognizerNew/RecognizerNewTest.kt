@@ -4,6 +4,7 @@ import MicrophoneSharedFlow
 import RecognizerNew
 import SpeechKitAuth
 import StateButton
+import StringBag
 import androidx.compose.runtime.getValue
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -12,7 +13,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -21,11 +21,12 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class RecognizerNewButtonTest {
     private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
 
     private lateinit var speechKitAuth: SpeechKitAuth
     private lateinit var microphoneSharedFlow: MicrophoneSharedFlow
     private lateinit var recognizer: RecognizerNew
+
+    private lateinit var stringBuffer: StringBag
 
     @Before
     fun setup() {
@@ -42,10 +43,13 @@ class RecognizerNewButtonTest {
                 coEvery { audioFlow } returns emptyFlow()
             }
 
+        stringBuffer = mockk(relaxed = true)
+
         recognizer =
             RecognizerNew(
                 speechKitAuth = speechKitAuth,
                 microphoneSharedFlow = microphoneSharedFlow,
+                stringBag = stringBuffer,
             )
     }
 

@@ -3,9 +3,7 @@ import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
@@ -17,12 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.Closeable
 import java.util.logging.Level
@@ -35,10 +31,10 @@ sealed interface StateButton {
 }
 
 class RecognizerNew(
-        private val speechKitAuth: SpeechKitAuth,
-        private val microphoneSharedFlow: MicrophoneSharedFlow,
-        private val stringBuffer: StringBuffer,
-    ) : RecognizerInterface, Closeable {
+    private val speechKitAuth: SpeechKitAuth,
+    private val microphoneSharedFlow: MicrophoneSharedFlow,
+    private val stringBag: StringBag,
+) : RecognizerInterface, Closeable {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
     private lateinit var accessKey: String
@@ -128,7 +124,7 @@ class RecognizerNew(
                             }
 
                         if (resultText.isNotEmpty()) {
-                            stringBuffer.add(resultText)
+                            stringBag.add(resultText)
 
                             logger.info("Распознано: $resultText (финальный: $isFinal)")
                         }
@@ -150,9 +146,9 @@ class RecognizerNew(
 
             override fun onError(t: Throwable) {
                 logger.log(Level.SEVERE, "Ошибка при распознавании речи", t)
-                //_recognisedFlow.update {
-              //      RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
-              //  }
+                // _recognisedFlow.update {
+                //      RecognitionResult.Error("Ошибка при распознавании: ${t.message}", t)
+                //  }
                 // close(t)
             }
 
@@ -198,12 +194,11 @@ class RecognizerNew(
         // /   .withDeadlineAfter(30, TimeUnit.SECONDS)
     }
 
-        private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
-        override val stateButton: State<StateButton> = _stateButton
-    }
+    private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
+    override val stateButton: State<StateButton> = _stateButton
+}
 
-    private fun ByteArray.toChunk() =
-        Salutespeech.RecognitionRequest.newBuilder()
-            .setAudioChunk(ByteString.copyFrom(this))
-            .build()
-
+private fun ByteArray.toChunk() =
+    Salutespeech.RecognitionRequest.newBuilder()
+        .setAudioChunk(ByteString.copyFrom(this))
+        .build()

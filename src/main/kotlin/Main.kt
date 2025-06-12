@@ -5,23 +5,20 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
 import org.koin.core.context.GlobalContext.startKoin
-import kotlin.run
 
 fun main() =
     application {
-        val koin = startKoin {
-            modules(appModule)
-        }
+        val koin =
+            startKoin {
+                modules(appModule)
+            }
         val recognizerNew =
             remember {
                 koin.koin.get<RecognizerNew>()
@@ -39,11 +36,11 @@ fun main() =
 fun App(recognizerNew: RecognizerNew) {
     val scope = rememberCoroutineScope()
     scope.launch {
-      //  recognizerNew
-      //      .recognizedFlow
-      //      .collect { result ->
-     //           applyResult(result)
-      //      }
+        //  recognizerNew
+        //      .recognizedFlow
+        //      .collect { result ->
+        //           applyResult(result)
+        //      }
     }
 
     MaterialTheme {
@@ -53,17 +50,16 @@ fun App(recognizerNew: RecognizerNew) {
                     recognizerNew.click()
                 },
             ) {
-                val buttonText = when (recognizerNew.stateButton.value) {
-                    StateButton.Idle -> "Start"
-                    StateButton.Start -> "Stop"
-                }
+                val buttonText =
+                    when (recognizerNew.stateButton.value) {
+                        StateButton.Idle -> "Start"
+                        StateButton.Start -> "Stop"
+                    }
                 Text(buttonText)
             }
             Text(
                 text = "Текст",
             )
-
         }
     }
 }
-
