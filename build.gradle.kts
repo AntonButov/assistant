@@ -65,10 +65,10 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
 
-    implementation(libs.krosai.core)
-    implementation(libs.krosai.annotations)
-    ksp(libs.krosai.compiler)
+    implementation(platform(libs.openai.bom))
+    implementation(libs.openai.client)
 
+    // define dependencies without versions
     // MockK
     testImplementation("io.mockk:mockk:1.13.8")
 
