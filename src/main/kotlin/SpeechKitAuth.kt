@@ -18,7 +18,7 @@ import java.util.logging.Logger
 import javax.net.ssl.X509TrustManager
 
 class SpeechKitAuth {
-    val authorizationKey = PropertyLoader.Companion.getProperty("speechkit.authorization.key") // todo переделать на настройки
+    val authorizationKey = PropertyLoader.Companion.getProperty("speechkit.key") // todo переделать на настройки
     val scope = "SALUTE_SPEECH_PERS"
 
     private val logger = Logger.getLogger(SpeechKitAuth::class.java.name)
