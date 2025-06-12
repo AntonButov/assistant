@@ -65,6 +65,10 @@ dependencies {
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
 
+    implementation(libs.krosai.core)
+    implementation(libs.krosai.annotations)
+    ksp(libs.krosai.compiler)
+
     // MockK
     testImplementation("io.mockk:mockk:1.13.8")
 

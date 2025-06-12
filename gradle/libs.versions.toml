@@ -19,6 +19,7 @@ junit = "5.10.2"
 junitVersion = "4.13.2"
 ksp = "2.1.21-2.0.1"
 koin = "3.5.3"
+krosai = "0.2.0"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8", version.ref = "kotlin" }
@@ -76,6 +77,10 @@ junit = { group = "junit", name = "junit", version.ref = "junitVersion" }
 # DI
 koin = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 
+krosai-core = { module = "io.krosai:krosai-core", version.ref = "krosai" }
+krosai-annotations = { module = "io.krosai:krosai-annotations", version.ref = "krosai" }
+krosai-compiler = { module = "io.krosai:krosai-compiler", version.ref = "krosai" }
+
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
@@ -86,4 +91,3 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 compose = { id = "org.jetbrains.compose", version.ref = "compose" }
-
