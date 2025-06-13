@@ -6,17 +6,17 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-interface OpenAiInterface {
+interface OpenAi {
     val output: Flow<String?> // переделать на sealed
 
     fun input(text: String)
 }
 
-class OpenAi(
+class OpenAiImpl(
     private val openAi: OpenAI,
     private val chatCompletionRequestMapper: ChatCompletionRequestMapper,
     private val chatCompletionMapper: ChatCompletionMapper,
-) : OpenAiInterface {
+) : OpenAi {
     private val inputFlow = MutableStateFlow<String?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)

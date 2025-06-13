@@ -30,7 +30,7 @@ class OpenAiInterfaceTest {
             every { mockChatCompletionMapper.map(mockCompletion) } returns expectedOutput
             coEvery { mockOpenAI.chatCompletions(expectedRequest) } returns flowOf(mockCompletion)
 
-            val openAi = OpenAi(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
+            val openAi = OpenAiImpl(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
 
             // When
             openAi.input(inputText)
@@ -69,7 +69,7 @@ class OpenAiInterfaceTest {
             coEvery { mockOpenAI.chatCompletions(request1) } returns flowOf(completion1)
             coEvery { mockOpenAI.chatCompletions(request2) } returns flowOf(completion2)
 
-            val openAi = OpenAi(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
+            val openAi = OpenAiImpl(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
 
             // When & Then
             openAi.input(input1)
@@ -98,7 +98,7 @@ class OpenAiInterfaceTest {
             every { mockChatCompletionMapper.map(mockCompletion) } returns expectedOutput
             coEvery { mockOpenAI.chatCompletions(expectedRequest) } returns flowOf(mockCompletion)
 
-            val openAi = OpenAi(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
+            val openAi = OpenAiImpl(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
 
             // When
             openAi.input(inputText)
@@ -128,7 +128,7 @@ class OpenAiInterfaceTest {
                 coEvery { mockOpenAI.chatCompletions(request) } returns flowOf(completion)
             }
 
-            val openAi = OpenAi(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
+            val openAi = OpenAiImpl(mockOpenAI, mockChatCompletionRequestMapper, mockChatCompletionMapper)
 
             // When & Then
             inputs.forEachIndexed { index, input ->
