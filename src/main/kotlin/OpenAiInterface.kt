@@ -1,12 +1,13 @@
 import com.aallam.openai.client.OpenAI
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 interface OpenAiInterface {
-    val output: Flow<String>
+    val output: Flow<String?> // переделать на sealed
 
     fun input(text: String)
 }
@@ -16,12 +17,13 @@ class OpenAi(
     private val chatCompletionRequestMapper: ChatCompletionRequestMapper,
     private val chatCompletionMapper: ChatCompletionMapper,
 ) : OpenAiInterface {
-    private val inputFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    private val inputFlow = MutableStateFlow<String?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val output: Flow<String> =
-        inputFlow.flatMapLatest { it ->
-            openAi.chatCompletions(chatCompletionRequestMapper.map(it))
+    override val output: Flow<String?> =
+        inputFlow.flatMapLatest { input ->
+            input ?: return@flatMapLatest flowOf(null)
+            openAi.chatCompletions(chatCompletionRequestMapper.map(input))
                 .map {
                     chatCompletionMapper.map(it)
                 }

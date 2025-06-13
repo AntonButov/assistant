@@ -70,7 +70,8 @@ dependencies {
 
     // define dependencies without versions
     // MockK
-    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
 
     // For using Compose in tests
     testImplementation(libs.junit.jupiter)
