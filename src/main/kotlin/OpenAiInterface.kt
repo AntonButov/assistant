@@ -19,7 +19,10 @@ interface OpenAiInterface {
     fun input(text: String)
 }
 
-class OpenAi(private val openAi: OpenAI): OpenAiInterface {
+class OpenAi(
+    private val stringBag: StringBag,
+    private val openAi: OpenAI
+): OpenAiInterface {
     private val inputFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
     @OptIn(ExperimentalCoroutinesApi::class)

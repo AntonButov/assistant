@@ -5,7 +5,7 @@ import org.junit.jupiter.api.assertThrows
 class StringBufferTest {
     @Test
     fun `add should append string with newline`() {
-        val buffer = StringBag()
+        val buffer = StringBagImpl()
         buffer.add("Hello")
         buffer.add("World")
         assertEquals("Hello\nWorld\n", buffer.get())
@@ -13,7 +13,7 @@ class StringBufferTest {
 
     @Test
     fun `add should throw assertion error on empty string`() {
-        val buffer = StringBag()
+        val buffer = StringBagImpl()
         assertThrows<AssertionError> {
             buffer.add("")
         }
@@ -21,7 +21,7 @@ class StringBufferTest {
 
     @Test
     fun `get should return empty string if nothing added`() {
-        val buffer = StringBag()
+        val buffer = StringBagImpl()
         assertEquals("", buffer.get())
     }
 }
