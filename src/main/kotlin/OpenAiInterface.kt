@@ -1,7 +1,3 @@
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.chat.ChatRole
-import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -16,37 +12,22 @@ interface OpenAiInterface {
 }
 
 class OpenAi(
-    private val stringBag: StringBag,
     private val openAi: OpenAI,
+    private val chatCompletionRequestMapper: ChatCompletionRequestMapper,
+    private val chatCompletionMapper: ChatCompletionMapper,
 ) : OpenAiInterface {
     private val inputFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val output: Flow<String> =
         inputFlow.flatMapLatest { it ->
-            openAi.chatCompletions(it.toChatCompletionRequest())
+            openAi.chatCompletions(chatCompletionRequestMapper.map(it))
                 .map {
-                    it.choices.first().delta.content.orEmpty()
+                    chatCompletionMapper.map(it)
                 }
         }
 
     override fun input(text: String) {
         inputFlow.tryEmit(text)
     }
-
-    private fun String.toChatCompletionRequest() =
-        ChatCompletionRequest(
-            model = ModelId("gpt-3.5-turbo"),
-            messages =
-                listOf(
-                    ChatMessage(
-                        role = ChatRole.System,
-                        content = "You are a helpful assistant that translates English to French.",
-                    ),
-                    ChatMessage(
-                        role = ChatRole.User,
-                        content = "Translate the following English text to French: “OpenAI is awesome!”",
-                    ),
-                ),
-        )
 }
