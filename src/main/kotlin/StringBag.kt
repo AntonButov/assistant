@@ -1,8 +1,12 @@
 interface StringBag {
     fun add(string: String)
+
     fun get(): String
+
     fun clear()
+
     fun isEmpty(): Boolean
+
     fun size(): Int
 }
 
