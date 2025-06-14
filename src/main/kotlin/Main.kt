@@ -1,4 +1,4 @@
-import resultText.rememberResultTextState
+import `resul-text`.rememberResultTextState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
@@ -11,6 +11,7 @@ import androidx.compose.ui.window.application
 import org.koin.core.context.GlobalContext.startKoin
 import recognizer.RecognizerNew
 import recognizer.StateButton
+import `resul-text`.ResultText
 
 fun main() =
     application {

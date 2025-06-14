@@ -1,4 +1,4 @@
-package resultText
+package `resul-text`
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
