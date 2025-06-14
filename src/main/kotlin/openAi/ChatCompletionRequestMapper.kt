@@ -9,6 +9,8 @@ interface ChatCompletionRequestMapper {
     fun map(string: String): ChatCompletionRequest
 }
 
+private const val PROMPT = "Я прохожу собеседование. Мне нужны короткие подсказки по ходу беседы."
+
 class ChatCompletionRequestMapperImpl : ChatCompletionRequestMapper {
     override fun map(string: String): ChatCompletionRequest {
         return ChatCompletionRequest(
@@ -17,11 +19,11 @@ class ChatCompletionRequestMapperImpl : ChatCompletionRequestMapper {
                 listOf(
                     ChatMessage(
                         role = ChatRole.System,
-                        content = "You are a helpful assistant that translates English to French.",
+                        content = PROMPT,
                     ),
                     ChatMessage(
                         role = ChatRole.User,
-                        content = "Translate the following English text to French: “OpenAI is awesome!”",
+                        content = string,
                     ),
                 ),
         )
