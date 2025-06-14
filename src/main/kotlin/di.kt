@@ -1,6 +1,9 @@
 
 import com.aallam.openai.client.OpenAI
-import microphoneSharedFlow.MicrophoneSharedFlow
+import com.aallam.openai.client.OpenAIConfig
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import microphoneSharedFlow.SoundSharedFlow
 import openAi.ChatCompletionMapper
 import openAi.ChatCompletionMapperImpl
 import openAi.ChatCompletionRequestMapper
@@ -17,11 +20,26 @@ import tools.PropertyLoader
 val appModule =
     module {
         factory { SpeechKitAuth() }
-        factory { MicrophoneSharedFlow() }
-        single { OpenAI(PropertyLoader.getProperty("openai.key")) }
+        factory { SoundSharedFlow() }
+        single { createOpenAi() }
         single<StringBag> { StringBagImpl(get()) }
         factory { RecognizerNew(get(), get(), get(), get()) }
         factory<ChatCompletionRequestMapper> { ChatCompletionRequestMapperImpl() }
         factory<ChatCompletionMapper> { ChatCompletionMapperImpl() }
         single<OpenAi> { OpenAiImpl(get(), get(), get()) }
     }
+
+private fun createOpenAi(): OpenAI {
+    val openAKey = PropertyLoader.getProperty("openai.key")
+
+    val config = OpenAIConfig(
+        token = openAKey,
+        httpClientConfig = {
+            install(Logging) {
+                level = LogLevel.NONE
+            }
+        }
+    )
+
+    return OpenAI(config)
+}

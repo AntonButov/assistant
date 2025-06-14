@@ -27,7 +27,7 @@ class OpenAiImpl(
         inputFlow.flatMapLatest { input ->
             input ?: return@flatMapLatest flowOf(null)
             val request = chatCompletionRequestMapper.map(input)
-            LoggerAssistant.info("request = $request")
+            LoggerAssistant.info("${input} ----------->>")
             openAi.chatCompletions(request)
                 .map {
                     chatCompletionMapper.map(it)
@@ -35,7 +35,6 @@ class OpenAiImpl(
         }
 
     override fun input(text: String) {
-        LoggerAssistant.info("input = $text")
         inputFlow.tryEmit(text)
     }
 }

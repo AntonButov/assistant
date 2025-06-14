@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import microphoneSharedFlow.MicrophoneSharedFlow
+import microphoneSharedFlow.SoundSharedFlow
 import openAi.OpenAi
 import java.io.Closeable
 import java.util.logging.Level
@@ -37,12 +37,12 @@ sealed interface StateButton {
 
 class RecognizerNew(
     private val speechKitAuth: SpeechKitAuth,
-    private val microphoneSharedFlow: MicrophoneSharedFlow,
+    private val soundSharedFlow: SoundSharedFlow,
     private val stringBag: StringBag,
     openAi: OpenAi,
 ) : RecognizerInterface, Closeable {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
-    private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
+    private val sourceFlow: Flow<ByteArray> = soundSharedFlow.audioFlow
     private lateinit var accessKey: String
     private val scope: String = "SALUTE_SPEECH_PERS"
 
@@ -111,7 +111,7 @@ class RecognizerNew(
 
     private fun run() {
         coroutineScope.launch {
-            microphoneSharedFlow.run()
+            soundSharedFlow.run()
         } // я не понимаю почему так работает
     }
 
@@ -137,8 +137,6 @@ class RecognizerNew(
 
                         if (resultText.isNotEmpty()) {
                             stringBag.add(resultText)
-
-                            logger.info("Распознано: $resultText (финальный: $isFinal)")
                         }
                     }
 

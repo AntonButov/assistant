@@ -17,7 +17,7 @@ import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
 
-class MicrophoneSharedFlow {
+class SoundSharedFlow {
     // Поток аудиоданных доступный извне
     private val _audioFlow = MutableSharedFlow<ByteArray>(extraBufferCapacity = 1)
 
@@ -29,7 +29,7 @@ class MicrophoneSharedFlow {
 
     suspend fun run() =
         withContext(Dispatchers.IO) {
-            logger.info("Начало записи...")
+          //  logger.info("Начало записи...")
 
             val mixers = AudioSystem.getMixerInfo()
             val availableLines = mutableListOf<TargetDataLine>()
@@ -38,14 +38,14 @@ class MicrophoneSharedFlow {
             for (mixerInfo in mixers) {
                 try {
                     val mixer = AudioSystem.getMixer(mixerInfo)
-                    logger.info("Проверяем микшер: ${mixerInfo.name}")
+                   //logger.info("Проверяем микшер: ${mixerInfo.name}")
 
                     if (mixer.isLineSupported(info)) {
                         val line = mixer.getLine(info) as TargetDataLine
                         line.open(format)
                         line.start()
                         availableLines.add(line)
-                        logger.info("Добавлена линия: ${mixerInfo.name}")
+                        //logger.info("Добавлена линия: ${mixerInfo.name}")
                     }
                 } catch (e: Exception) {
                     logger.info("Не удалось открыть линию для ${mixerInfo.name}: ${e.message}")
@@ -79,7 +79,7 @@ class MicrophoneSharedFlow {
 
     private suspend fun captureAudio(line: TargetDataLine) =
         withContext(Dispatchers.IO) {
-            val stopTime = System.currentTimeMillis() + 15000
+            val stopTime = System.currentTimeMillis() + 25000
 
             while (System.currentTimeMillis() < stopTime) {
                 try {
@@ -107,46 +107,5 @@ class MicrophoneSharedFlow {
                     break
                 }
             }
-        }
-
-    // Метод для получения информации о доступных микшерах
-    fun getAvailableMixers(): List<String> {
-        val mixers = AudioSystem.getMixerInfo()
-        return mixers.map { "${it.name} - ${it.description}" }
-    }
-
-    // Метод для захвата только с определенного микшера
-    suspend fun runWithSpecificMixer(mixerName: String) =
-        withContext(Dispatchers.IO) {
-            logger.info("Начало записи с микшера: $mixerName")
-
-            val mixers = AudioSystem.getMixerInfo()
-            val targetMixer = mixers.find { it.name.contains(mixerName, ignoreCase = true) }
-
-            if (targetMixer == null) {
-                logger.info("Микшер '$mixerName' не найден")
-                return@withContext
-            }
-
-            try {
-                val mixer = AudioSystem.getMixer(targetMixer)
-                if (!mixer.isLineSupported(info)) {
-                    logger.info("Микшер не поддерживает нужный формат")
-                    return@withContext
-                }
-
-                val line = mixer.getLine(info) as TargetDataLine
-                line.open(format)
-                line.start()
-
-                captureAudio(line)
-
-                line.stop()
-                line.close()
-            } catch (e: Exception) {
-                logger.info("Ошибка при работе с микшером: ${e.message}")
-            }
-
-            logger.info("Запись завершена.")
         }
 }

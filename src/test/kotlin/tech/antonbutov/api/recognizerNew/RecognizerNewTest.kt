@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import microphoneSharedFlow.MicrophoneSharedFlow
+import microphoneSharedFlow.SoundSharedFlow
 import openAi.OpenAi
 import org.junit.Before
 import org.junit.Test
@@ -24,7 +24,7 @@ class RecognizerNewButtonTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var speechKitAuth: SpeechKitAuth
-    private lateinit var microphoneSharedFlow: MicrophoneSharedFlow
+    private lateinit var soundSharedFlow: SoundSharedFlow
     private lateinit var recognizer: RecognizerNew
 
     private lateinit var stringBuffer: StringBag
@@ -39,7 +39,7 @@ class RecognizerNewButtonTest {
                 coEvery { getAccessToken() } returns "fake-token"
             }
 
-        microphoneSharedFlow =
+        soundSharedFlow =
             mockk(relaxed = true) {
                 coEvery { audioFlow } returns flowOf(ByteArray(0))
                 coEvery { run() } returns Unit
@@ -53,7 +53,7 @@ class RecognizerNewButtonTest {
         recognizer =
             RecognizerNew(
                 speechKitAuth = speechKitAuth,
-                microphoneSharedFlow = microphoneSharedFlow,
+                soundSharedFlow = soundSharedFlow,
                 stringBag = stringBuffer,
                 openAi = openAi,
             )
