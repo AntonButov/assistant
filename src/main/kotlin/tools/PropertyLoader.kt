@@ -1,3 +1,5 @@
+package tools
+
 import java.io.FileInputStream
 import java.util.Properties
 import java.util.logging.Logger

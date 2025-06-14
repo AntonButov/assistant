@@ -10,6 +10,9 @@ import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import openAi.ChatCompletionMapper
+import openAi.ChatCompletionRequestMapper
+import openAi.OpenAiImpl
 import org.junit.Test
 
 class OpenAiInterfaceTest {

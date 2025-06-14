@@ -1,3 +1,5 @@
+package openAi
+
 import com.aallam.openai.api.chat.ChatCompletionChunk
 
 interface ChatCompletionMapper {

@@ -1,6 +1,10 @@
 
 import com.aallam.openai.client.OpenAI
+import microphoneSharedFlow.MicrophoneSharedFlow
+import openAi.OpenAiImpl
 import org.koin.dsl.module
+import recognizer.RecognizerNew
+import tools.PropertyLoader
 
 val appModule =
     module {

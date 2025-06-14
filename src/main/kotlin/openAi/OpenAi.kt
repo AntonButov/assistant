@@ -1,3 +1,5 @@
+package openAi
+
 import com.aallam.openai.client.OpenAI
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

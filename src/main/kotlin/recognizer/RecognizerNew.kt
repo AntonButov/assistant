@@ -1,4 +1,6 @@
-
+package recognizer
+import SpeechKitAuth
+import StringBag
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
 import androidx.compose.runtime.MutableState
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import microphoneSharedFlow.MicrophoneSharedFlow
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger

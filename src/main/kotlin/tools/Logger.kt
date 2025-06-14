@@ -1,3 +1,5 @@
+package tools
+
 import java.util.logging.Logger
 
 object LoggerAssistant {

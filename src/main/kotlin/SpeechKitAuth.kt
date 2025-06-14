@@ -11,6 +11,8 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import oauth.OAuthResponse
+import tools.PropertyLoader
 import java.security.cert.X509Certificate
 import java.util.UUID
 import java.util.logging.Level

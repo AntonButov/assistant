@@ -1,3 +1,5 @@
+package oauth
+
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

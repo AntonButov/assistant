@@ -1,3 +1,5 @@
+package recognizer
+
 import androidx.compose.runtime.State
 
 interface RecognizerInterface {

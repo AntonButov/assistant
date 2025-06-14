@@ -1,3 +1,5 @@
+import openAi.OpenAiImpl
+
 interface StringBag {
     fun add(string: String)
 
