@@ -1,4 +1,3 @@
-import resultText.ResultText
 import resultText.rememberResultTextState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
