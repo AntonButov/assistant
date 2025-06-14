@@ -7,10 +7,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onStart
+import `resul-text`.ResultClean
+import `resul-text`.ResultState
+import `resul-text`.ResultStateText
 import tools.LoggerAssistant
 
 interface OpenAi {
-    val output: Flow<String?> // переделать на sealed
+    val output: Flow<ResultState?> // убрать null
 
     fun input(text: String)
 }
@@ -23,15 +28,21 @@ class OpenAiImpl(
     private val inputFlow = MutableStateFlow<String?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val output: Flow<String?> =
+    override val output: Flow<ResultState?> =
         inputFlow.flatMapLatest { input ->
             input ?: return@flatMapLatest flowOf(null)
             val request = chatCompletionRequestMapper.map(input)
             LoggerAssistant.info("${input} ----------->>")
-            openAi.chatCompletions(request)
-                .map {
-                    chatCompletionMapper.map(it)
-                }
+            merge(
+                flowOf(ResultClean),
+                openAi.chatCompletions(request)
+                    .map {
+                        ResultStateText(
+                            chatCompletionMapper.map(it)
+                        )
+                    }
+            )
+
         }
 
     override fun input(text: String) {

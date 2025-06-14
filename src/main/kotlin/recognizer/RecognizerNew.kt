@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import microphoneSharedFlow.SoundSharedFlow
 import openAi.OpenAi
+import `resul-text`.ResultState
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -90,7 +91,7 @@ class RecognizerNew(
         }
     }
 
-    override val outputFlow: Flow<String> = openAi.output.filterNotNull()
+    override val outputFlow: Flow<ResultState> = openAi.output.filterNotNull()
 
     private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
     override val stateButton: State<StateButton> = _stateButton

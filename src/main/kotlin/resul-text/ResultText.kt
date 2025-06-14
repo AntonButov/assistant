@@ -14,6 +14,6 @@ fun ResultText(resultTextState: State<String>) {
 @Preview
 @Composable
 fun ResultTextPreview() {
-    val resultTextState = rememberResultTextState(flowOf("Hello World"))
+    val resultTextState = rememberResultTextState(flowOf(ResultStateText("Hello World")))
     ResultText(resultTextState)
 }
