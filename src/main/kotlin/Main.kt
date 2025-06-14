@@ -1,6 +1,7 @@
+import ResultText.ResultText
+import ResultText.ResultTextStateImpl
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -9,10 +10,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import kotlinx.coroutines.*
 import org.koin.core.context.GlobalContext.startKoin
 import recognizer.RecognizerNew
 import recognizer.StateButton
+import tools.LoggerAssistant
 
 fun main() =
     application {
@@ -35,7 +36,12 @@ fun main() =
 @Composable
 @Preview
 fun App(recognizerNew: RecognizerNew) {
-    val outputText = recognizerNew.outputFlow.collectAsState(initial = "")
+    val rememberResultTextState = remember { ResultTextStateImpl() }
+    LoggerAssistant.info("collect")
+    val outputFlow = remember { recognizerNew.outputFlow }
+    val outputText = outputFlow.collectAsState(initial = "СтартТекст")
+    LoggerAssistant.info("new test = ${outputText.value}")
+    rememberResultTextState.addText(outputText.value)
 
     MaterialTheme {
         Column {
@@ -54,9 +60,7 @@ fun App(recognizerNew: RecognizerNew) {
             Text(
                 text = "Текст",
             )
-            Text(
-                text = outputText.value,
-            )
+            Text(rememberResultTextState.text)
         }
     }
 }

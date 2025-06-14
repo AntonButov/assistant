@@ -7,7 +7,7 @@ import androidx.compose.runtime.remember
 import io.ktor.websocket.Frame
 
 @Composable
-fun ResultText(resultTextState: ResultTextState = remember { ResultTextStateImpl() }) {
+fun ResultText(resultTextState: ResultTextState) {
     Text(resultTextState.text)
 }
 

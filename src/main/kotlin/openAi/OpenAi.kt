@@ -27,13 +27,18 @@ class OpenAiImpl(
     override val output: Flow<String?> =
         inputFlow.flatMapLatest { input ->
             input ?: return@flatMapLatest flowOf(null)
-            openAi.chatCompletions(chatCompletionRequestMapper.map(input))
+            val request = chatCompletionRequestMapper.map(input)
+            LoggerAssistant.info("request = $request")
+            openAi.chatCompletions(request)
                 .map {
-                    chatCompletionMapper.map(it)
+                    chatCompletionMapper.map(it).also {
+                        LoggerAssistant.info("From gpt: $it")
+                    }
                 }
         }
 
     override fun input(text: String) {
+        LoggerAssistant.info("input = $text")
         inputFlow.tryEmit(text)
     }
 }
