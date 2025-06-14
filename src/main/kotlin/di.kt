@@ -7,7 +7,6 @@ import openAi.ChatCompletionRequestMapper
 import openAi.ChatCompletionRequestMapperImpl
 import openAi.OpenAi
 import openAi.OpenAiImpl
-import org.koin.dsl.bind
 import org.koin.dsl.module
 import recognizer.RecognizerNew
 /**
@@ -21,8 +20,8 @@ val appModule =
         factory { MicrophoneSharedFlow() }
         single { OpenAI(PropertyLoader.getProperty("openai.key")) }
         single<StringBag> { StringBagImpl(get()) }
-        factory { RecognizerNew(get(), get(), get()) }
+        factory { RecognizerNew(get(), get(), get(), get()) }
         factory<ChatCompletionRequestMapper> { ChatCompletionRequestMapperImpl() }
         factory<ChatCompletionMapper> { ChatCompletionMapperImpl() }
-        factory<OpenAi> { OpenAiImpl(get(), get(), get()) }
+        single<OpenAi> { OpenAiImpl(get(), get(), get()) }
     }

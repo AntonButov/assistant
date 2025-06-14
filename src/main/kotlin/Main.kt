@@ -4,8 +4,8 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import kotlinx.coroutines.*
@@ -34,14 +34,7 @@ fun main() =
 @Composable
 @Preview
 fun App(recognizerNew: RecognizerNew) {
-    val scope = rememberCoroutineScope()
-    scope.launch {
-        //  recognizerNew
-        //      .recognizedFlow
-        //      .collect { result ->
-        //           applyResult(result)
-        //      }
-    }
+    val outputText = recognizerNew.outputFlow.collectAsState(initial = "")
 
     MaterialTheme {
         Column {
@@ -59,6 +52,9 @@ fun App(recognizerNew: RecognizerNew) {
             }
             Text(
                 text = "Текст",
+            )
+            Text(
+                text = outputText.value,
             )
         }
     }

@@ -1,7 +1,6 @@
 package recognizer
 import SpeechKitAuth
 import StringBag
-import StringBagImpl
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
 import androidx.compose.runtime.MutableState
@@ -19,11 +18,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import microphoneSharedFlow.MicrophoneSharedFlow
+import openAi.OpenAi
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -38,6 +39,7 @@ class RecognizerNew(
     private val speechKitAuth: SpeechKitAuth,
     private val microphoneSharedFlow: MicrophoneSharedFlow,
     private val stringBag: StringBag,
+    private val openAi: OpenAi,
 ) : RecognizerInterface, Closeable {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
@@ -87,6 +89,12 @@ class RecognizerNew(
                 .collect()
         }
     }
+
+    override val outputFlow: Flow<String>
+        get() = openAi.output.filterNotNull()
+
+    private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
+    override val stateButton: State<StateButton> = _stateButton
 
     override fun click() {
         when (_stateButton.value) {
@@ -197,9 +205,6 @@ class RecognizerNew(
             .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(headers))
         // /   .withDeadlineAfter(30, TimeUnit.SECONDS)
     }
-
-    private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
-    override val stateButton: State<StateButton> = _stateButton
 }
 
 private fun ByteArray.toChunk() =

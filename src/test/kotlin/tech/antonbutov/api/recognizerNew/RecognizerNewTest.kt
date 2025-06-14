@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import microphoneSharedFlow.MicrophoneSharedFlow
+import openAi.OpenAi
 import org.junit.Before
 import org.junit.Test
 import recognizer.RecognizerNew
@@ -27,6 +28,8 @@ class RecognizerNewButtonTest {
     private lateinit var recognizer: RecognizerNew
 
     private lateinit var stringBuffer: StringBag
+
+    private lateinit var openAi: OpenAi
 
     @Before
     fun setup() {
@@ -45,11 +48,14 @@ class RecognizerNewButtonTest {
 
         stringBuffer = mockk(relaxed = true)
 
+        openAi = mockk(relaxed = true)
+
         recognizer =
             RecognizerNew(
                 speechKitAuth = speechKitAuth,
                 microphoneSharedFlow = microphoneSharedFlow,
                 stringBag = stringBuffer,
+                openAi = openAi,
             )
     }
 
