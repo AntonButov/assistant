@@ -31,10 +31,6 @@ class OpenAiImpl(
                 .map {
                     chatCompletionMapper.map(it)
                 }
-                .onEach {
-                    LoggerAssistant.info("Have answer:")
-                    LoggerAssistant.info(it)
-                }
         }
 
     override fun input(text: String) {
