@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import tools.LoggerAssistant
 
 interface OpenAi {
     val output: Flow<String?> // переделать на sealed
@@ -28,6 +30,10 @@ class OpenAiImpl(
             openAi.chatCompletions(chatCompletionRequestMapper.map(input))
                 .map {
                     chatCompletionMapper.map(it)
+                }
+                .onEach {
+                    LoggerAssistant.info("Have answer:")
+                    LoggerAssistant.info(it)
                 }
         }
 
