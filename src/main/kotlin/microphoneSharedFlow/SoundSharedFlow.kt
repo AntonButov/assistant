@@ -76,7 +76,7 @@ class SoundSharedFlow {
                 }
             }
 
-            // Закрываем все линии
+            // сюда не доходит ???
 
         }
 
@@ -93,7 +93,6 @@ class SoundSharedFlow {
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun captureAudio(line: TargetDataLine) =
         withContext(Dispatchers.IO) {
-            val stopTime = System.currentTimeMillis() + 25000
 
             while (coroutineContext.isActive) {
                 try {
