@@ -6,7 +6,8 @@ val appModule =
     module {
         factory { SpeechKitAuth() }
         factory { MicrophoneSharedFlow() }
-        factory<StringBag> { StringBagImpl() }
+        single<StringBag> { StringBagImpl(get()) }
         factory { RecognizerNew(get(), get(), get()) }
         single { OpenAI(PropertyLoader.getProperty("openai.key")) }
+        factory { OpenAiImpl(get(), get(), get()) }
     }
