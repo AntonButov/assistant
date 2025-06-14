@@ -69,7 +69,7 @@ class SpeechKitAuth {
                             Logger.getLogger("Ktor").info(message)
                         }
                     }
-                level = LogLevel.INFO
+                level = LogLevel.NONE
             }
         }
 

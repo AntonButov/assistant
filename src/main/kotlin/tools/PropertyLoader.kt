@@ -13,7 +13,6 @@ class PropertyLoader {
             val localPropertiesFile = FileInputStream("local.properties")
             properties.load(localPropertiesFile)
             localPropertiesFile.close()
-            logger.info("Properties loaded successfully")
         }
 
         fun getProperty(key: String): String {

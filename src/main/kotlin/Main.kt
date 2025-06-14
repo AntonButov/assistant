@@ -12,7 +12,6 @@ import androidx.compose.ui.window.application
 import org.koin.core.context.GlobalContext.startKoin
 import recognizer.RecognizerNew
 import recognizer.StateButton
-import tools.LoggerAssistant
 
 fun main() =
     application {
@@ -36,8 +35,6 @@ fun main() =
 @Preview
 fun App(recognizerNew: RecognizerNew) {
     val resultTextState = rememberResultTextState(recognizerNew.outputFlow)
-    LoggerAssistant.info("collect")
-
     MaterialTheme {
         Column {
             Button(

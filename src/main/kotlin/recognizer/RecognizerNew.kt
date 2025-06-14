@@ -39,7 +39,7 @@ class RecognizerNew(
     private val speechKitAuth: SpeechKitAuth,
     private val microphoneSharedFlow: MicrophoneSharedFlow,
     private val stringBag: StringBag,
-    private val openAi: OpenAi,
+    openAi: OpenAi,
 ) : RecognizerInterface, Closeable {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val sourceFlow: Flow<ByteArray> = microphoneSharedFlow.audioFlow
@@ -103,6 +103,7 @@ class RecognizerNew(
             }
 
             StateButton.Start -> {
+                close()
                 _stateButton.value = StateButton.Idle
             }
         }

@@ -30,9 +30,7 @@ class OpenAiImpl(
             LoggerAssistant.info("request = $request")
             openAi.chatCompletions(request)
                 .map {
-                    chatCompletionMapper.map(it).also {
-                        LoggerAssistant.info("From gpt: $it")
-                    }
+                    chatCompletionMapper.map(it)
                 }
         }
 
