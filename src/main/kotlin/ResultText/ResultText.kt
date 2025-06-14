@@ -3,19 +3,16 @@ package ResultText
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import io.ktor.websocket.Frame
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun ResultText(resultTextState: ResultTextState) {
-    Text(resultTextState.text)
+    Text(resultTextState.state.value)
 }
 
 @Preview
 @Composable
 fun ResultTextPreview() {
-    val resultTextState = remember { ResultTextStateImpl() }
-    resultTextState.addText("Hello")
-    resultTextState.addText(" World")
+    val resultTextState = rememberResultTextState(flowOf("Hello World"))
     ResultText(resultTextState)
 }

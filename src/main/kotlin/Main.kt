@@ -1,12 +1,11 @@
 import ResultText.ResultText
-import ResultText.ResultTextStateImpl
+import ResultText.rememberResultTextState
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -36,12 +35,8 @@ fun main() =
 @Composable
 @Preview
 fun App(recognizerNew: RecognizerNew) {
-    val rememberResultTextState = remember { ResultTextStateImpl() }
+    val resultTextState = rememberResultTextState(recognizerNew.outputFlow)
     LoggerAssistant.info("collect")
-    val outputFlow = remember { recognizerNew.outputFlow }
-    val outputText = outputFlow.collectAsState(initial = "СтартТекст")
-    LoggerAssistant.info("new test = ${outputText.value}")
-    rememberResultTextState.addText(outputText.value)
 
     MaterialTheme {
         Column {
@@ -60,7 +55,7 @@ fun App(recognizerNew: RecognizerNew) {
             Text(
                 text = "Текст",
             )
-            Text(rememberResultTextState.text)
+            ResultText(resultTextState)
         }
     }
 }

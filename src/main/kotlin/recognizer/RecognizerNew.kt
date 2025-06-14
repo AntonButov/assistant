@@ -90,7 +90,7 @@ class RecognizerNew(
         }
     }
 
-    override val outputFlow: Flow<String> =  openAi.output.filterNotNull()
+    override val outputFlow: Flow<String> = openAi.output.filterNotNull()
 
     private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
     override val stateButton: State<StateButton> = _stateButton

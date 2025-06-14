@@ -1,16 +1,28 @@
 package ResultText
 
-interface ResultTextState {
-    val text: String
-    fun addText(text: String)
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+
+@Composable
+fun rememberResultTextState(flow: Flow<String>): ResultTextState {
+    val scope = rememberCoroutineScope()
+    return remember {
+        ResultTextState(flow, scope)
+    }
 }
 
-class ResultTextStateImpl() : ResultTextState {
-    private val buffer = StringBuilder()
-    override val text: String
-        get() = buffer.toString()
+class ResultTextState(flow: Flow<String>, scope: CoroutineScope) {
+    val state = mutableStateOf("")
 
-    override fun addText(text: String) {
-        buffer.append(text)
+    init {
+        flow.onEach {
+            state.value += it
+        }.launchIn(scope)
     }
 }
