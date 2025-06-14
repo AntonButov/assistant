@@ -117,10 +117,11 @@ class RecognizerNew(
     }
 
     override fun close() {
-        requestObserver.onCompleted()
-        logger.info("Закрытие клиента распознавания речи")
-        channel.shutdown()
-        coroutineScope.cancel()
+        soundSharedFlow.stop()
+       // requestObserver.onCompleted()
+     //   logger.info("Закрытие клиента распознавания речи")
+     //   channel.shutdown()
+     //   coroutineScope.cancel()
     }
 
     private fun createStreamObserver() =

@@ -1,10 +1,15 @@
 package microphoneSharedFlow
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable.join
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import tools.LoggerAssistant
@@ -16,6 +21,7 @@ import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
+import kotlin.coroutines.cancellation.CancellationException
 
 class SoundSharedFlow {
     // Поток аудиоданных доступный извне
@@ -27,18 +33,20 @@ class SoundSharedFlow {
     val format = AudioFormat(16000f, 16, 1, true, true)
     val info = DataLine.Info(TargetDataLine::class.java, format)
 
+    private var recordingJob: Job? = null
+    val availableLines = mutableListOf<TargetDataLine>()
+
     suspend fun run() =
         withContext(Dispatchers.IO) {
-          //  logger.info("Начало записи...")
+            recordingJob = coroutineContext[Job]
 
             val mixers = AudioSystem.getMixerInfo()
-            val availableLines = mutableListOf<TargetDataLine>()
 
             // Поиск доступных аудиолиний (микрофон и системный звук)
             for (mixerInfo in mixers) {
                 try {
                     val mixer = AudioSystem.getMixer(mixerInfo)
-                   //logger.info("Проверяем микшер: ${mixerInfo.name}")
+                    //logger.info("Проверяем микшер: ${mixerInfo.name}")
 
                     if (mixer.isLineSupported(info)) {
                         val line = mixer.getLine(info) as TargetDataLine
@@ -69,19 +77,25 @@ class SoundSharedFlow {
             }
 
             // Закрываем все линии
-            availableLines.forEach { line ->
-                line.stop()
-                line.close()
-            }
 
-            logger.info("Запись завершена.")
         }
 
+    fun stop() {
+        recordingJob?.cancel()
+        availableLines.forEach { line ->
+            line.stop()
+            line.close()
+        }
+
+        logger.info("Чтение остановлено.")
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun captureAudio(line: TargetDataLine) =
         withContext(Dispatchers.IO) {
             val stopTime = System.currentTimeMillis() + 25000
 
-            while (System.currentTimeMillis() < stopTime) {
+            while (coroutineContext.isActive) {
                 try {
                     val buffer = ByteArray(10024)
                     val bytesRead = line.read(buffer, 0, buffer.size)
