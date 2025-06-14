@@ -1,3 +1,4 @@
+import openAi.OpenAi
 import openAi.OpenAiImpl
 
 interface StringBag {
@@ -9,7 +10,7 @@ interface StringBag {
 }
 
 class StringBagImpl(
-    private val openAi: OpenAiImpl,
+    private val openAi: OpenAi,
 ) : StringBag {
     private val buffer = StringBuilder()
 
