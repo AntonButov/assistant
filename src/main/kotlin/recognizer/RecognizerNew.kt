@@ -3,9 +3,6 @@ import SpeechKitAuth
 import StringBag
 import TODO.Salutespeech
 import TODO.SmartSpeechGrpc
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import com.google.protobuf.ByteString
 import io.grpc.Metadata
 import io.grpc.netty.shaded.io.grpc.netty.GrpcSslContexts
@@ -15,7 +12,6 @@ import io.grpc.stub.MetadataUtils
 import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
@@ -29,13 +25,6 @@ import `resul-text`.ResultState
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger
-import kotlin.time.Duration
-
-sealed interface StateButton {
-    data object Idle : StateButton
-
-    data object Start : StateButton
-}
 
 class RecognizerNew(
     private val speechKitAuth: SpeechKitAuth,
@@ -95,7 +84,6 @@ class RecognizerNew(
 
     override val outputFlow: Flow<ResultState> = openAi.output.filterNotNull()
 
-
     override fun start() {
         coroutineScope.launch {
             soundSharedFlow.run()
@@ -104,10 +92,10 @@ class RecognizerNew(
 
     override fun close() {
         soundSharedFlow.stop()
-       // requestObserver.onCompleted()
-     //   logger.info("Закрытие клиента распознавания речи")
-     //   channel.shutdown()
-     //   coroutineScope.cancel()
+        // requestObserver.onCompleted()
+        //   logger.info("Закрытие клиента распознавания речи")
+        //   channel.shutdown()
+        //   coroutineScope.cancel()
     }
 
     private fun createStreamObserver() =
@@ -170,9 +158,9 @@ class RecognizerNew(
                 .setSampleRate(sampleRate)
                 .setChannelsCount(1)
                 .setModel("callcenter")
-              //  .setLanguage(languageCode)
-           //     .setLanguage(alternativeLanguageCode)
-           //     .setEnablePartialResults(setEnabled)
+                //  .setLanguage(languageCode)
+                //     .setLanguage(alternativeLanguageCode)
+                //     .setEnablePartialResults(setEnabled)
                 // Включаем поддержку множественных высказываний
                 .setMaxSpeechTimeout(com.google.protobuf.Duration.newBuilder().setSeconds(1).build())
                 .setEnableMultiUtterance(setEnabled)

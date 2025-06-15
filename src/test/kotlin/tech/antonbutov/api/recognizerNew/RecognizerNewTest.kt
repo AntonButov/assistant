@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import mainViewModel.StateButton
 import microphoneSharedFlow.SoundSharedFlow
 import openAi.OpenAi
 import org.junit.Before
 import org.junit.Test
 import recognizer.RecognizerNew
-import recognizer.StateButton
 
 @ExperimentalCoroutinesApi
 class RecognizerNewButtonTest {

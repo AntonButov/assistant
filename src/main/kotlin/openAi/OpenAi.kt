@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import `resul-text`.ResultClean
 import `resul-text`.ResultState
 import `resul-text`.ResultStateText
@@ -32,17 +31,16 @@ class OpenAiImpl(
         inputFlow.flatMapLatest { input ->
             input ?: return@flatMapLatest flowOf(null)
             val request = chatCompletionRequestMapper.map(input)
-            LoggerAssistant.info("${input} ----------->>")
+            LoggerAssistant.info("$input ----------->>")
             merge(
                 flowOf(ResultClean),
                 openAi.chatCompletions(request)
                     .map {
                         ResultStateText(
-                            chatCompletionMapper.map(it)
+                            chatCompletionMapper.map(it),
                         )
-                    }
+                    },
             )
-
         }
 
     override fun input(text: String) {

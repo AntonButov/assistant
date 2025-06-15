@@ -3,9 +3,7 @@ package microphoneSharedFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable.join
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -21,7 +19,6 @@ import javax.sound.sampled.AudioInputStream
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
-import kotlin.coroutines.cancellation.CancellationException
 
 class SoundSharedFlow {
     // Поток аудиоданных доступный извне
@@ -46,14 +43,14 @@ class SoundSharedFlow {
             for (mixerInfo in mixers) {
                 try {
                     val mixer = AudioSystem.getMixer(mixerInfo)
-                    //logger.info("Проверяем микшер: ${mixerInfo.name}")
+                    // logger.info("Проверяем микшер: ${mixerInfo.name}")
 
                     if (mixer.isLineSupported(info)) {
                         val line = mixer.getLine(info) as TargetDataLine
                         line.open(format)
                         line.start()
                         availableLines.add(line)
-                        //logger.info("Добавлена линия: ${mixerInfo.name}")
+                        // logger.info("Добавлена линия: ${mixerInfo.name}")
                     }
                 } catch (e: Exception) {
                     logger.info("Не удалось открыть линию для ${mixerInfo.name}: ${e.message}")
@@ -77,7 +74,6 @@ class SoundSharedFlow {
             }
 
             // сюда не доходит ???
-
         }
 
     fun stop() {
@@ -93,7 +89,6 @@ class SoundSharedFlow {
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun captureAudio(line: TargetDataLine) =
         withContext(Dispatchers.IO) {
-
             while (coroutineContext.isActive) {
                 try {
                     val buffer = ByteArray(1000000)
