@@ -9,8 +9,9 @@ interface ChatCompletionRequestMapper {
     fun map(string: String): ChatCompletionRequest
 }
 
-private const val PROMPT_REVIEW = "Я прохожу собеседование. Мне нужны короткие подсказки по ходу беседы."
-private const val PROMPT_CHECK = "Я проверяю настройки. Отвечай то что получаешь, пож-та."
+private const val PROMPT_SUMMARIZE = "Ты слушаешь поток аудио. И составляешь целые разумные предложения."
+private const val PROMPT_REVIEW = "Ты проходишь собеседование на Андроид-разработчика. Ты опытный андроид разработчик. Давай четкие ответы на вопросы, которые я задаю. Возможно ты не будешь все слышать догадывайся. Не пиши лишнего текста."
+private const val PROMPT_CHECK = "Я проверяю настройки. Отвечай то что получаешь, пож-та. "
 
 class ChatCompletionRequestMapperImpl : ChatCompletionRequestMapper {
     override fun map(string: String): ChatCompletionRequest {
@@ -20,7 +21,7 @@ class ChatCompletionRequestMapperImpl : ChatCompletionRequestMapper {
                 listOf(
                     ChatMessage(
                         role = ChatRole.System,
-                        content = PROMPT_CHECK,
+                        content = PROMPT_SUMMARIZE,
                     ),
                     ChatMessage(
                         role = ChatRole.User,

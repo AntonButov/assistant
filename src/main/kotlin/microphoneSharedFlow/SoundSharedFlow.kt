@@ -96,7 +96,7 @@ class SoundSharedFlow {
 
             while (coroutineContext.isActive) {
                 try {
-                    val buffer = ByteArray(10024)
+                    val buffer = ByteArray(1000000)
                     val bytesRead = line.read(buffer, 0, buffer.size)
 
                     if (bytesRead > 0) {

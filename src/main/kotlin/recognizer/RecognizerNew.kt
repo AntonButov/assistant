@@ -29,6 +29,7 @@ import `resul-text`.ResultState
 import java.io.Closeable
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.time.Duration
 
 sealed interface StateButton {
     data object Idle : StateButton
@@ -48,6 +49,7 @@ class RecognizerNew(
     private val scope: String = "SALUTE_SPEECH_PERS"
 
     private val languageCode = "ru-RU"
+    private val alternativeLanguageCode = "en-US"
     private val sampleRate = 16000
 
     private val logger = Logger.getLogger(RecognizerNew::class.java.name)
@@ -174,17 +176,24 @@ class RecognizerNew(
         //
     }
 
+    private val setEnabled
+        get() = Salutespeech.OptionalBool.newBuilder().setEnable(true).build()
+
     private fun createOptions(): Salutespeech.RecognitionRequest {
         val options =
             Salutespeech.RecognitionOptions.newBuilder()
                 .setAudioEncoding(Salutespeech.RecognitionOptions.AudioEncoding.PCM_S16LE)
                 .setSampleRate(sampleRate)
                 .setChannelsCount(1)
-                .setLanguage(languageCode)
+                .setModel("callcenter")
+              //  .setLanguage(languageCode)
+           //     .setLanguage(alternativeLanguageCode)
+           //     .setEnablePartialResults(setEnabled)
                 // Включаем поддержку множественных высказываний
-                .setEnableMultiUtterance(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                .setMaxSpeechTimeout(com.google.protobuf.Duration.newBuilder().setSeconds(1).build())
+                .setEnableMultiUtterance(setEnabled)
                 // Настраиваем распознавание длинных высказываний
-                .setEnableLongUtterances(Salutespeech.OptionalBool.newBuilder().setEnable(true).build())
+                .setEnableLongUtterances(setEnabled)
                 .build()
 
         // Создаем запрос с опциями
