@@ -9,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.koin.core.context.GlobalContext.startKoin
-import recognizer.RecognizerNew
 import recognizer.StateButton
 import `resul-text`.ResultText
 
@@ -19,39 +18,37 @@ fun main() =
             startKoin {
                 modules(appModule)
             }
-        val recognizerNew =
+        val viewModel =
             remember {
-                koin.koin.get<RecognizerNew>()
+                koin.koin.get<MainViewModel>()
             }
+
         Window(onCloseRequest = {
-            recognizerNew.close()
+            viewModel.close()
             exitApplication()
         }) {
-            App(recognizerNew)
+            App(viewModel)
         }
     }
 
 @Composable
 @Preview
-fun App(recognizerNew: RecognizerNew) {
-    val resultTextState = rememberResultTextState(recognizerNew.outputFlow)
+fun App(viewModel: MainViewModel) {
+    val resultTextState = rememberResultTextState(viewModel.outputFlow)
     MaterialTheme {
         Column {
             Button(
                 onClick = {
-                    recognizerNew.click()
+                    viewModel.click()
                 },
             ) {
                 val buttonText =
-                    when (recognizerNew.stateButton.value) {
+                    when (viewModel.stateButton.value) {
                         StateButton.Idle -> "Start"
                         StateButton.Start -> "Stop"
                     }
                 Text(buttonText)
             }
-            Text(
-                text = "Текст",
-            )
             ResultText(resultTextState)
         }
     }

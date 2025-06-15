@@ -95,24 +95,8 @@ class RecognizerNew(
 
     override val outputFlow: Flow<ResultState> = openAi.output.filterNotNull()
 
-    private val _stateButton: MutableState<StateButton> = mutableStateOf(StateButton.Idle)
-    override val stateButton: State<StateButton> = _stateButton
 
-    override fun click() {
-        when (_stateButton.value) {
-            StateButton.Idle -> {
-                run()
-                _stateButton.value = StateButton.Start
-            }
-
-            StateButton.Start -> {
-                close()
-                _stateButton.value = StateButton.Idle
-            }
-        }
-    }
-
-    private fun run() {
+    override fun start() {
         coroutineScope.launch {
             soundSharedFlow.run()
         } // я не понимаю почему так работает

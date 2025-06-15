@@ -6,7 +6,8 @@ import `resul-text`.ResultState
 
 interface RecognizerInterface {
     val outputFlow: Flow<ResultState>
-    val stateButton: State<StateButton>
 
-    fun click()
+    fun start()
+
+    fun close()
 }

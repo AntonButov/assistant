@@ -11,6 +11,7 @@ import openAi.ChatCompletionRequestMapperImpl
 import openAi.OpenAi
 import openAi.OpenAiImpl
 import org.koin.dsl.module
+import recognizer.RecognizerInterface
 import recognizer.RecognizerNew
 /**
  * Utility for loading properties from configuration files.
@@ -23,10 +24,11 @@ val appModule =
         factory { SoundSharedFlow() }
         single { createOpenAi() }
         single<StringBag> { StringBagImpl(get()) }
-        factory { RecognizerNew(get(), get(), get(), get()) }
+        factory<RecognizerInterface> { RecognizerNew(get(), get(), get(), get()) }
         factory<ChatCompletionRequestMapper> { ChatCompletionRequestMapperImpl() }
         factory<ChatCompletionMapper> { ChatCompletionMapperImpl() }
         single<OpenAi> { OpenAiImpl(get(), get(), get()) }
+        single<MainViewModel> { MainViewModelImpl(get()) }
     }
 
 private fun createOpenAi(): OpenAI {
