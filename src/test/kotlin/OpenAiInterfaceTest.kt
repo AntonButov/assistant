@@ -7,13 +7,15 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import openAi.ChatCompletionMapper
 import openAi.ChatCompletionRequestMapper
 import openAi.OpenAiImpl
 import org.junit.Test
+import `resul-text`.ResultStateText
 
 class OpenAiInterfaceTest {
     @Test
@@ -38,8 +40,8 @@ class OpenAiInterfaceTest {
             // When
             openAi.input(inputText)
 
-            val result = openAi.output.first()
-            assertEquals(expectedOutput, result)
+            val result = openAi.output.take(2).toList()[1]
+            assertEquals(expectedOutput, (result as ResultStateText).text)
 
             verify { mockChatCompletionRequestMapper.map(inputText) }
             verify { mockChatCompletionMapper.map(mockCompletion) }
@@ -76,12 +78,12 @@ class OpenAiInterfaceTest {
 
             // When & Then
             openAi.input(input1)
-            val result1 = openAi.output.first()
-            assertEquals(output1, result1)
+            val result1 = openAi.output.take(2).toList()[1]
+            assertEquals(output1, (result1 as ResultStateText).text)
 
             openAi.input(input2)
-            val result2 = openAi.output.first()
-            assertEquals(output2, result2)
+            val result2 = openAi.output.take(2).toList()[1]
+            assertEquals(output2, (result2 as ResultStateText).text)
         }
 
     @Test
@@ -107,8 +109,8 @@ class OpenAiInterfaceTest {
             openAi.input(inputText)
 
             // Then
-            val result = openAi.output.first()
-            assertEquals(expectedOutput, result)
+            val result = openAi.output.take(2).toList()[1]
+            assertEquals(expectedOutput, (result as ResultStateText).text)
         }
 
     @Test
@@ -136,8 +138,8 @@ class OpenAiInterfaceTest {
             // When & Then
             inputs.forEachIndexed { index, input ->
                 openAi.input(input)
-                val result = openAi.output.first()
-                assertEquals(outputs[index], result)
+                val result = openAi.output.take(2).toList()[1]
+                assertEquals(outputs[index], (result as ResultStateText).text)
             }
         }
 }
